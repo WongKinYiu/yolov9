@@ -1,0 +1,124 @@
+# YOLOv9
+
+# parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+#activation: nn.LeakyReLU(0.1)
+#activation: nn.ReLU()
+
+# anchors
+anchors: 3
+
+# YOLOv9 backbone
+backbone:
+  [
+   [-1, 1, Silence, []],  
+   
+   # conv down
+   [-1, 1, Conv, [64, 3, 2]],  # 1-P1/2
+
+   # conv down
+   [-1, 1, Conv, [128, 3, 2]],  # 2-P2/4
+
+   # elan-1 block
+   [-1, 1, RepNCSPELAN4, [256, 128, 64, 1]],  # 3
+
+   # avg-conv down
+   [-1, 1, ADown, [256]],  # 4-P3/8
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 256, 128, 1]],  # 5
+
+   # avg-conv down
+   [-1, 1, ADown, [512]],  # 6-P4/16
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 7
+
+   # avg-conv down
+   [-1, 1, ADown, [512]],  # 8-P5/32
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 9
+  ]
+
+# YOLOv9 head
+head:
+  [
+   # elan-spp block
+   [-1, 1, SPPELAN, [512, 256]],  # 10
+
+   # up-concat merge
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [[-1, 7], 1, Concat, [1]],  # cat backbone P4
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 13
+
+   # up-concat merge
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+   [[-1, 5], 1, Concat, [1]],  # cat backbone P3
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [256, 256, 128, 1]],  # 16 (P3/8-small)
+
+   # avg-conv-down merge
+   [-1, 1, ADown, [256]],
+   [[-1, 13], 1, Concat, [1]],  # cat head P4
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 19 (P4/16-medium)
+
+   # avg-conv-down merge
+   [-1, 1, ADown, [512]],
+   [[-1, 10], 1, Concat, [1]],  # cat head P5
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 22 (P5/32-large)
+   
+   
+   # multi-level reversible auxiliary branch
+   
+   # routing
+   [5, 1, CBLinear, [[256]]], # 23
+   [7, 1, CBLinear, [[256, 512]]], # 24
+   [9, 1, CBLinear, [[256, 512, 512]]], # 25
+   
+   # conv down
+   [0, 1, Conv, [64, 3, 2]],  # 26-P1/2
+
+   # conv down
+   [-1, 1, Conv, [128, 3, 2]],  # 27-P2/4
+
+   # elan-1 block
+   [-1, 1, RepNCSPELAN4, [256, 128, 64, 1]],  # 28
+
+   # avg-conv down fuse
+   [-1, 1, ADown, [256]],  # 29-P3/8
+   [[23, 24, 25, -1], 1, CBFuse, [[0, 0, 0]]], # 30  
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 256, 128, 1]],  # 31
+
+   # avg-conv down fuse
+   [-1, 1, ADown, [512]],  # 32-P4/16
+   [[24, 25, -1], 1, CBFuse, [[1, 1]]], # 33 
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 34
+
+   # avg-conv down fuse
+   [-1, 1, ADown, [512]],  # 35-P5/32
+   [[25, -1], 1, CBFuse, [[2]]], # 36
+
+   # elan-2 block
+   [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # 37
+   
+   
+   
+   # detection head
+
+   # detect
+   [[31, 34, 37, 16, 19, 22], 1, DualDDetect, [nc]],  # DualDDetect(A3, A4, A5, P3, P4, P5)
+  ]
