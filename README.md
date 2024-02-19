@@ -46,7 +46,7 @@ cd /yolov9
 
 ## Evaluation
 
-[`yolov9-c.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov9-c.pt)
+[`yolov9-c.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov9-c.pt) [`yolov9-e.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov9-e.pt) [`gelan-c.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/gelan-c.pt) [`gelan-e.pt`](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/gelan-e.pt)
 
 ``` shell
 # evaluate yolov9 models
@@ -116,7 +116,7 @@ Under construction.
 @article{wang2024yolov9,
   title={{YOLOv9}},
   author={Wang, Chien-Yao  and Liao, Hong-Yuan Mark},
-  booktitle={ArXiv},
+  booktitle={arXiv preprint},
   year={2024}
 }
 ```
