@@ -107,7 +107,7 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 
 ## Re-parameterization
 
-Under reconstruction.
+Under construction.
 
 
 ## Citation
