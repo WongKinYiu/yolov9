@@ -1,6 +1,6 @@
 # YOLOv9
 
-Implementation of paper - [YOLOv9]()
+Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information]()
 
 <div align="center">
     <a href="./">
@@ -114,7 +114,7 @@ Under construction.
 
 ```
 @article{wang2024yolov9,
-  title={{YOLOv9}},
+  title={{YOLOv9}: Learning What You Want to Learn Using Programmable Gradient Information},
   author={Wang, Chien-Yao  and Liao, Hong-Yuan Mark},
   booktitle={arXiv preprint},
   year={2024}
@@ -123,7 +123,7 @@ Under construction.
 
 ```
 @article{chang2023yolor,
-  title={YOLOR-Based Multi-Task Learning},
+  title={{YOLOR}-Based Multi-Task Learning},
   author={Chang, Hung-Shuo and Wang, Chien-Yao and Wang, Richard Robert and Chou, Gene and Liao, Hong-Yuan Mark},
   journal={arXiv preprint arXiv:2309.16921},
   year={2023}
