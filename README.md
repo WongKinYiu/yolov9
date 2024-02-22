@@ -1,6 +1,6 @@
 # YOLOv9
 
-Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information]()
+Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information](https://arxiv.org/abs/2402.13616)
 
 <div align="center">
     <a href="./">
@@ -118,7 +118,7 @@ Under construction.
 @article{wang2024yolov9,
   title={{YOLOv9}: Learning What You Want to Learn Using Programmable Gradient Information},
   author={Wang, Chien-Yao  and Liao, Hong-Yuan Mark},
-  booktitle={arXiv preprint},
+  booktitle={arXiv preprint arXiv:2402.13616},
   year={2024}
 }
 ```
