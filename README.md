@@ -25,6 +25,8 @@ MS COCO
 ## Useful Links
 
 <details><summary> <b>Expand</b> </summary>
+
+Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-1960955297
     
 ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506
 
