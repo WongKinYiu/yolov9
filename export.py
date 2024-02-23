@@ -22,7 +22,7 @@ if platform.system() != 'Windows':
     ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 from models.experimental import attempt_load
-from models.yolo import (ClassificationModel, Detect, DetectionModel, SegmentationModel,DDetect,DualDetect,DDetect,
+from models.yolo import (ClassificationModel, Detect, DetectionModel, SegmentationModel,DDetect,DualDDetect
                          DualDetect,TripleDetect,TripleDDetect)
 from utils.dataloaders import LoadImages
 from utils.general import (LOGGER, Profile, check_dataset, check_img_size, check_requirements, check_version,
