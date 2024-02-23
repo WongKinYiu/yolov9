@@ -28,7 +28,7 @@ MS COCO
 
 Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-1960955297
     
-ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506
+ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690
 
