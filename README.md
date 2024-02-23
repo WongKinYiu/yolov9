@@ -22,6 +22,22 @@ MS COCO
 
 <!-- small and medium models will be released after the paper be accepted and published. -->
 
+## Useful Links
+
+<details><summary> <b>Expand</b> </summary>
+
+Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-1960955297
+    
+ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688
+
+TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690
+
+CoLab demo: https://github.com/WongKinYiu/yolov9/pull/18
+
+ONNXSlim export: https://github.com/WongKinYiu/yolov9/pull/37
+
+</details>
+
 
 ## Installation
 
