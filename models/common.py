@@ -20,8 +20,9 @@ import torch
 import torch.nn as nn
 from IPython.display import display
 from PIL import Image
-from torch.cuda import amp
+import torch.nn.functional as F
 
+from torch.cuda import amp
 from utils import TryExcept
 from utils.dataloaders import exif_transpose, letterbox
 from utils.general import (LOGGER, ROOT, Profile, check_requirements, check_suffix, check_version, colorstr,
@@ -58,16 +59,19 @@ class Conv(nn.Module):
 
 
 class AConv(nn.Module):
+    """ Average Convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)"""
+
     def __init__(self, c1, c2):  # ch_in, ch_out, shortcut, kernels, groups, expand
         super().__init__()
         self.cv1 = Conv(c1, c2, 3, 2, 1)
 
     def forward(self, x):
-        x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
+        x = F.avg_pool2d(x, kernel_size=2, stride=1, padding=0, ceil_mode=False, count_include_pad=True)
         return self.cv1(x)
 
 
 class ADown(nn.Module):
+    """ Average pool"""
     def __init__(self, c1, c2):  # ch_in, ch_out, shortcut, kernels, groups, expand
         super().__init__()
         self.c = c2 // 2
@@ -75,10 +79,10 @@ class ADown(nn.Module):
         self.cv2 = Conv(c1 // 2, self.c, 1, 1, 0)
 
     def forward(self, x):
-        x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
-        x1,x2 = x.chunk(2, 1)
+        x = F.avg_pool2d(x, kernel_size=2, stride=1, padding=0, ceil_mode=False, count_include_pad=True)
+        x1, x2 = x.chunk(2, 1)
         x1 = self.cv1(x1)
-        x2 = torch.nn.functional.max_pool2d(x2, 3, 2, 1)
+        x2 = F.max_pool2d(x2, 3, 2, 1)
         x2 = self.cv2(x2)
         return torch.cat((x1, x2), 1)
 
@@ -234,7 +238,7 @@ class DFL(nn.Module):
     def __init__(self, c1=17):
         super().__init__()
         self.conv = nn.Conv2d(c1, 1, 1, bias=False).requires_grad_(False)
-        self.conv.weight.data[:] = nn.Parameter(torch.arange(c1, dtype=torch.float).view(1, c1, 1, 1)) # / 120.0
+        self.conv.weight.data[:] = nn.Parameter(torch.arange(c1, dtype=torch.float).view(1, c1, 1, 1))  # / 120.0
         self.c1 = c1
         # self.bn = nn.BatchNorm2d(4)
 
@@ -413,7 +417,7 @@ class SPP(nn.Module):
             warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
             return self.cv2(torch.cat([x] + [m(x) for m in self.m], 1))
 
-        
+
 class ASPP(torch.nn.Module):
 
     def __init__(self, in_channels, out_channels):
@@ -491,10 +495,6 @@ class SPPF(nn.Module):
             return self.cv2(torch.cat((x, y1, y2, self.m(y2)), 1))
 
 
-import torch.nn.functional as F
-from torch.nn.modules.utils import _pair
-    
-    
 class ReOrg(nn.Module):
     # yolo
     def __init__(self):
@@ -548,18 +548,19 @@ class Shortcut(nn.Module):
         self.d = dimension
 
     def forward(self, x):
-        return x[0]+x[1]
-    
-    
+        return x[0] + x[1]
+
+
 class Silence(nn.Module):
     def __init__(self):
         super(Silence, self).__init__()
-    def forward(self, x):    
+
+    def forward(self, x):
         return x
 
 
 ##### GELAN #####        
-        
+
 class SPPELAN(nn.Module):
     # spp-elan
     def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -569,23 +570,23 @@ class SPPELAN(nn.Module):
         self.cv2 = SP(5)
         self.cv3 = SP(5)
         self.cv4 = SP(5)
-        self.cv5 = Conv(4*c3, c2, 1, 1)
+        self.cv5 = Conv(4 * c3, c2, 1, 1)
 
     def forward(self, x):
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
-        
-        
+
+
 class RepNCSPELAN4(nn.Module):
     # csp-elan
     def __init__(self, c1, c2, c3, c4, c5=1):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-        self.c = c3//2
+        self.c = c3 // 2
         self.cv1 = Conv(c1, c3, 1, 1)
-        self.cv2 = nn.Sequential(RepNCSP(c3//2, c4, c5), Conv(c4, c4, 3, 1))
+        self.cv2 = nn.Sequential(RepNCSP(c3 // 2, c4, c5), Conv(c4, c4, 3, 1))
         self.cv3 = nn.Sequential(RepNCSP(c4, c4, c5), Conv(c4, c4, 3, 1))
-        self.cv4 = Conv(c3+(2*c4), c2, 1, 1)
+        self.cv4 = Conv(c3 + (2 * c4), c2, 1, 1)
 
     def forward(self, x):
         y = list(self.cv1(x).chunk(2, 1))
@@ -597,6 +598,7 @@ class RepNCSPELAN4(nn.Module):
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
+
 #################
 
 
@@ -607,7 +609,7 @@ class ImplicitA(nn.Module):
         super(ImplicitA, self).__init__()
         self.channel = channel
         self.implicit = nn.Parameter(torch.zeros(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, std=.02)        
+        nn.init.normal_(self.implicit, std=.02)
 
     def forward(self, x):
         return self.implicit + x
@@ -618,10 +620,11 @@ class ImplicitM(nn.Module):
         super(ImplicitM, self).__init__()
         self.channel = channel
         self.implicit = nn.Parameter(torch.ones(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, mean=1., std=.02)        
+        nn.init.normal_(self.implicit, mean=1., std=.02)
 
     def forward(self, x):
         return self.implicit * x
+
 
 #################
 
@@ -638,6 +641,7 @@ class CBLinear(nn.Module):
         outs = self.conv(x).split(self.c2s, dim=1)
         return outs
 
+
 class CBFuse(nn.Module):
     def __init__(self, idx):
         super(CBFuse, self).__init__()
@@ -648,6 +652,7 @@ class CBFuse(nn.Module):
         res = [F.interpolate(x[self.idx[i]], size=target_size, mode='nearest') for i, x in enumerate(xs[:-1])]
         out = torch.sum(torch.stack(res + xs[-1:]), dim=0)
         return out
+
 
 #################
 

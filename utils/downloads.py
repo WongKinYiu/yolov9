@@ -54,7 +54,7 @@ def safe_download(file, url, url2=None, min_bytes=1E0, error_msg=''):
         LOGGER.info('')
 
 
-def attempt_download(file, repo='ultralytics/yolov5', release='v7.0'):
+def attempt_download(file, repo='WongKinYiu/yolov9', release='v0.1'):
     # Attempt file download from GitHub release assets if not found locally. release = 'latest', 'v7.0', etc.
     from utils.general import LOGGER
 
