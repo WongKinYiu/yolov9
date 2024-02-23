@@ -37,6 +37,7 @@ seaborn>=0.11.0
 # tensorflow>=2.4.1
 # tensorflowjs>=3.9.0
 # openvino-dev
+# onnxslim
 
 # Deploy ----------------------------------------------------------------------
 # tritonclient[all]~=2.24.0
