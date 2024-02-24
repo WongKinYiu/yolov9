@@ -32,6 +32,8 @@ ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-19605195
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690
 
+Hugging Face demo: https://github.com/WongKinYiu/yolov9/issues/45#issuecomment-1961496943
+
 CoLab demo: https://github.com/WongKinYiu/yolov9/pull/18
 
 ONNXSlim export: https://github.com/WongKinYiu/yolov9/pull/37
