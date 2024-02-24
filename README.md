@@ -38,6 +38,8 @@ CoLab demo: https://github.com/WongKinYiu/yolov9/pull/18
 
 ONNXSlim export: https://github.com/WongKinYiu/yolov9/pull/37
 
+AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-2152139662
+
 </details>
 
 
