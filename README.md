@@ -141,7 +141,7 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 
 ## Re-parameterization
 
-Under construction.
+See [reparameterization.ipynb](https://github.com/WongKinYiu/yolov9/blob/main/tools/reparameterization.ipynb).
 
 
 ## Citation
