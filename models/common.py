@@ -72,6 +72,7 @@ class AConv(nn.Module):
 
 class ADown(nn.Module):
     """ Average pool"""
+
     def __init__(self, c1, c2):  # ch_in, ch_out, shortcut, kernels, groups, expand
         super().__init__()
         self.c = c2 // 2
@@ -578,6 +579,24 @@ class SPPELAN(nn.Module):
         return self.cv5(torch.cat(y, 1))
 
 
+class SPPFELAN(nn.Module):
+    # Spatial Pyramid Pooling with ELAN - Fast (SPPF) layer
+    def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__()
+        self.c = c3
+        self.cv1 = Conv(c1, c3, 1, 1)
+        self.cv2 = Conv(4 * c3, c2, 1, 1)
+        self.m = SP(5)
+
+    def forward(self, x):
+        x = self.cv1(x)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
+            y1 = self.m(x)
+            y2 = self.m(y1)
+            return self.cv2(torch.cat((x, y1, y2, self.m(y2)), 1))
+
+
 class RepNCSPELAN4(nn.Module):
     # csp-elan
     def __init__(self, c1, c2, c3, c4, c5=1):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -605,6 +624,7 @@ class RepNCSPELAN4(nn.Module):
 ##### YOLOR #####
 
 class ImplicitA(nn.Module):
+    # Implicit Knowledge addition layer - https://arxiv.org/abs/2105.04206
     def __init__(self, channel):
         super(ImplicitA, self).__init__()
         self.channel = channel
@@ -616,6 +636,7 @@ class ImplicitA(nn.Module):
 
 
 class ImplicitM(nn.Module):
+    # Implicit Knowledge multiplication layer - https://arxiv.org/abs/2105.04206
     def __init__(self, channel):
         super(ImplicitM, self).__init__()
         self.channel = channel
