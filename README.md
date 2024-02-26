@@ -140,6 +140,10 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 
 Under construction.
 
+## Loggers
+
+Check the [YOLOv9 loggers documentation](utils/loggers/README.md).
+
 
 ## Citation
 
