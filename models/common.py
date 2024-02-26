@@ -107,6 +107,8 @@ class RepConvN(nn.Module):
 
     def forward(self, x):
         """Forward process"""
+        if hasattr(self, 'conv'):
+            return self.forward_fuse(x)
         id_out = 0 if self.bn is None else self.bn(x)
         return self.act(self.conv1(x) + self.conv2(x) + id_out)
 
