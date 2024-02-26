@@ -35,13 +35,15 @@ Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-196
     
 ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688
 
-TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690
+TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
 
 Hugging Face demo: https://github.com/WongKinYiu/yolov9/issues/45#issuecomment-1961496943
 
 CoLab demo: https://github.com/WongKinYiu/yolov9/pull/18
 
 ONNXSlim export: https://github.com/WongKinYiu/yolov9/pull/37
+
+YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-2153512879
 
 AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-2152139662
 
