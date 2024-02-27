@@ -74,6 +74,16 @@ cd /yolov9
 
 </details>
 
+Conda virtual environment (recommend)
+<details><summary> <b>Expand</b> </summary>
+
+```
+apt update
+apt install -y zip htop screen libgl1-mesa-glx
+conda env create -f .environment.yaml
+```
+
+</details>
 
 ## Evaluation
 
