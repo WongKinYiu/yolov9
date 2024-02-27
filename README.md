@@ -193,3 +193,7 @@ Parts of code of [YOLOR-Based Multi-Task Learning](https://arxiv.org/abs/2309.16
 * [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
 
 </details>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=WongKinYiu/yolov9&type=Date)](https://star-history.com/#WongKinYiu/yolov9&Date)
