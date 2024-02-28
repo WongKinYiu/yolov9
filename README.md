@@ -159,9 +159,9 @@ Step 2:  Sign up for a [free Comet account](https://www.comet.com/signup?utm_sou
 export COMET_API_KEY=<Your Comet API Key>
 ```
 
-Step 3: Start debugging and comparing your model training runs in the Comet UI
+Step 3: Start debugging and comparing your model training runs in the Comet UI!
 
-![Comet UI]("./figure/comet_ui.gif)
+![Comet UI](./figure/comet_ui.gif)
 
 
 ## Citation
