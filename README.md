@@ -161,6 +161,9 @@ export COMET_API_KEY=<Your Comet API Key>
 
 Step 3: Start debugging and comparing your model training runs in the Comet UI
 
+![Comet UI]("./figure/comet_ui.gif)
+
+
 ## Citation
 
 ```
