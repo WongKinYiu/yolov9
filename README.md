@@ -55,6 +55,8 @@ AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-215213966
 
 AX650N deploy: https://github.com/WongKinYiu/yolov9/issues/96#issue-2156115760
 
+Conda environment: https://github.com/WongKinYiu/yolov9/pull/93
+
 </details>
 
 
