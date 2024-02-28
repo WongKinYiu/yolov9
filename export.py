@@ -148,7 +148,7 @@ def export_openvino(file, metadata, half, prefix=colorstr('OpenVINO:')):
     LOGGER.info(f'\n{prefix} starting export with openvino {ie.__version__}...')
     f = str(file).replace('.pt', f'_openvino_model{os.sep}')
 
-    cmd = f"mo --input_model {file.with_suffix('.onnx')} --output_dir {f} --data_type {'FP16' if half else 'FP32'}"
+    cmd = f"mo --input_model {file.with_suffix('.onnx')} --output_dir {f} {"--compress_to_fp16" if half else ""}"
     subprocess.run(cmd.split(), check=True, env=os.environ)  # export
     yaml_save(Path(f) / file.with_suffix('.yaml').name, metadata)  # add metadata.yaml
     return f, None
