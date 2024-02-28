@@ -45,9 +45,13 @@ ONNXSlim export: https://github.com/WongKinYiu/yolov9/pull/37
 
 YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-2153512879
 
+YOLOv9 DeepSORT: https://github.com/WongKinYiu/yolov9/issues/98#issue-2156172319
+
 YOLOv9 counting: https://github.com/WongKinYiu/yolov9/issues/84#issue-2153904804
 
 AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-2152139662
+
+AX650N deploy: https://github.com/WongKinYiu/yolov9/issues/96#issue-2156115760
 
 </details>
 
