@@ -37,7 +37,9 @@ ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-19605195
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
 
-C# inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
+C# ONNX inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
+
+C# OpenVino inference: https://github.com/WongKinYiu/yolov9/issues/95#issuecomment-1968131244
 
 Hugging Face demo: https://github.com/WongKinYiu/yolov9/issues/45#issuecomment-1961496943
 
