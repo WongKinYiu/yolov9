@@ -37,7 +37,9 @@ ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-19605195
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
 
-C# inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
+C# ONNX inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
+
+C# OpenVINO inference: https://github.com/WongKinYiu/yolov9/issues/95#issuecomment-1968131244
 
 OpenCV: https://github.com/WongKinYiu/yolov9/issues/113#issuecomment-1971327672
 
