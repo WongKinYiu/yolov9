@@ -73,13 +73,13 @@ Note:
 
    该模块与早前yolo版本中的SPPF结构基本一致，如下图。
    
-   <img src="tutorials_img/SPPELAN.svg" alt="train_structure" style="zoom: 33%;" />
+   <img src="tutorials_img/SPPELAN.svg" alt="train_structure" style="zoom: 33;" />
 
 * **ADown `models.common.ADown`:**
 
   该模块在`yolov9-c.yaml`与`yolov9-e.yaml`结构中出现，替代了模型中部分`CBS`模块。
 
-  <img src="tutorials_img/ADown.svg" alt="train_structure" style="zoom: 33%;" />
+  <img src="tutorials_img/ADown.svg" alt="train_structure" style="zoom: 33;" />
 
 ---
 
