@@ -33,11 +33,13 @@ MS COCO
 
 Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-1960955297
     
-ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688
+ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688 https://github.com/WongKinYiu/yolov9/issues/130#issue-2162045461
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
 
 C# inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
+
+OpenCV: https://github.com/WongKinYiu/yolov9/issues/113#issuecomment-1971327672
 
 Hugging Face demo: https://github.com/WongKinYiu/yolov9/issues/45#issuecomment-1961496943
 
@@ -51,11 +53,15 @@ YOLOv9 DeepSORT: https://github.com/WongKinYiu/yolov9/issues/98#issue-2156172319
 
 YOLOv9 counting: https://github.com/WongKinYiu/yolov9/issues/84#issue-2153904804
 
+YOLOv9 face detection: https://github.com/WongKinYiu/yolov9/issues/121#issue-2160218766
+
 AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-2152139662
 
 AX650N deploy: https://github.com/WongKinYiu/yolov9/issues/96#issue-2156115760
 
 Conda environment: https://github.com/WongKinYiu/yolov9/pull/93
+
+AutoDL docker environment: https://github.com/WongKinYiu/yolov9/issues/112#issue-2158203480
 
 </details>
 
