@@ -72,8 +72,8 @@ Note:
 * **ELAN-SPP** `models.common.SPPELAN`:
 
    该模块与早前yolo版本中的SPPF结构基本一致，如下图。
-   
-   <img src="tutorials_img/SPPELAN.svg" alt="train_structure" style="zoom: 0.33;" />
+
+   ![train_structure](tutorials_img/SPPELAN.svg)
 
 * **ADown `models.common.ADown`:**
 
