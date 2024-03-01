@@ -71,7 +71,7 @@ Through Detect Head (mainly NMS and some others) we can get the object detection
 
    This block replaces a part of `CBS` in`yolov9-c.yaml` and `yolov9-e.yaml`.
 
-   <img src="C:/Users/Administrator/Downloads/tutorials/tutorials_img/ADown.svg" alt="train_structure" style="zoom: 33%;" />
+   <img src="tutorials/tutorials_img/ADown.svg" alt="train_structure" style="zoom: 33%;" />
 
 ---
 
