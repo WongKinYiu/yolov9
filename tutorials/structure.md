@@ -65,13 +65,13 @@ Through Detect Head (mainly NMS and some others) we can get the object detection
 
 * **ELAN-SPP** `models.common.SPPELAN`:
 
-   <img src="tutorials_img/SPPELAN.svg" alt="train_structure" width="200" height="200">
+   <img src="tutorials_img/SPPELAN.svg" alt="train_structure" width="400" height="400">
 
 * **ADown `models.common.ADown`:**
 
    This block replaces a part of `CBS` in`yolov9-c.yaml` and `yolov9-e.yaml`.
 
-   <img src="tutorials_img/ADown.svg" alt="train_structure" width="200" height="200">
+   <img src="tutorials_img/ADown.svg" alt="train_structure" width="400" height="400">
 
 ---
 
