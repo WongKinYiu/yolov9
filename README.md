@@ -35,7 +35,7 @@ Custom training: https://github.com/WongKinYiu/yolov9/issues/30#issuecomment-196
     
 ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-1960519506 https://github.com/WongKinYiu/yolov9/issues/40#issue-2150697688 https://github.com/WongKinYiu/yolov9/issues/130#issue-2162045461
 
-TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143 https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
+TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143#issue-2164002309 https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004
 
 C# ONNX inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
 
@@ -53,7 +53,7 @@ YOLOv9 ROS: https://github.com/WongKinYiu/yolov9/issues/144#issue-2164210644
 
 YOLOv9 ROS TensorRT: https://github.com/WongKinYiu/yolov9/issues/145#issue-2164218595
 
-YOLOv9 Julia: https://github.com/WongKinYiu/yolov9/issues/141
+YOLOv9 Julia: https://github.com/WongKinYiu/yolov9/issues/141#issuecomment-1973710107
 
 YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-2153512879
 
