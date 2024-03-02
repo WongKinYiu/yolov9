@@ -89,7 +89,7 @@ def export_onnx_end2end(model, im, file, simplify, topk_all, iou_thres, conf_thr
     check_requirements('onnx')
     import onnx
     LOGGER.info(f'\n{prefix} starting export with onnx {onnx.__version__}...')
-    f = os.path.splitext(file)[0] + "_end2end.onnx"
+    f = os.path.splitext(file)[0] + "-end2end.onnx"
     batch_size = 'batch'
 
     dynamic_axes = {'images': {0 : 'batch', 2: 'height', 3:'width'}, } # variable length axes

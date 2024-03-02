@@ -135,7 +135,10 @@ class ONNX_TRT(nn.Module):
     def forward(self, output):
         ## https://github.com/thaitc-hust/yolov9-tensorrt/blob/main/torch2onnx.py
         ## thanks https://github.com/thaitc-hust
-        output = output[0]
+        
+        if isinstance(output, list):  ## yolov9-c.pt and yolov9-e.pt return list
+            output = output[0]
+
         output = output.permute(0, 2, 1)
         #print("[INFO] Output's origin model shape: ",output.shape)
         bboxes_x = output[..., 0:1]
