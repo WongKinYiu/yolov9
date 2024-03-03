@@ -83,7 +83,6 @@ class TRT_NMS(torch.autograd.Function):
     ):
         
         batch_size, num_boxes, num_classes = scores.shape
-        print(batch_size)
         num_det = torch.randint(0, max_output_boxes, (batch_size, 1), dtype=torch.int32)
         det_boxes = torch.randn(batch_size, max_output_boxes, 4)
         det_scores = torch.randn(batch_size, max_output_boxes)
@@ -133,20 +132,18 @@ class ONNX_TRT(nn.Module):
         self.n_classes=n_classes
 
     def forward(self, output):
-        ## https://github.com/thaitc-hust/yolov9-tensorrt/blob/main/torch2onnx.py
-        ## thanks https://github.com/thaitc-hust
         
-        if isinstance(output, list):  ## yolov9-c.pt and yolov9-e.pt return list
-            output = output[0]
+        if isinstance(output, list):  ## yolov9-c.pt and yolov9-e.pt return list output[0] is prediction of aux branch, output[1] is prediction of main branch.
+            output = output[1]        #  https://github.com/WongKinYiu/yolov9/issues/130#issuecomment-1974792028
 
+        ## thanks to https://github.com/thaitc-hust/yolov9-tensorrt/blob/main/torch2onnx.py 
         output = output.permute(0, 2, 1)
-        #print("[INFO] Output's origin model shape: ",output.shape)
         bboxes_x = output[..., 0:1]
         bboxes_y = output[..., 1:2]
         bboxes_w = output[..., 2:3]
         bboxes_h = output[..., 3:4]
         bboxes = torch.cat([bboxes_x, bboxes_y, bboxes_w, bboxes_h], dim = -1)
-        bboxes = bboxes.unsqueeze(2) # [n_batch, n_bboxes, 4] -> [n_batch, n_bboxes, 1, 4]
+        bboxes = bboxes.unsqueeze(2) # [n_batch, n_bboxes, 4] -> [n_batch, n_bboxes, 1, 4] 
         obj_conf = output[..., 4:]
         scores = obj_conf
         num_det, det_boxes, det_scores, det_classes = TRT_NMS.apply(bboxes, scores, self.background_class, self.box_coding,
