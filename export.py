@@ -659,6 +659,13 @@ def parse_opt():
         default=['torchscript'],
         help='torchscript, onnx, onnx_end2end, openvino, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle')
     opt = parser.parse_args()
+
+    if 'onnx_end2end' in opt.include:  
+        opt.simplify = True
+        opt.dynamic = True
+        opt.inplace = True
+        opt.half = False
+    
     print_args(vars(opt))
     return opt
 
