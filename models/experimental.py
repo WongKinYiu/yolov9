@@ -131,20 +131,20 @@ class ONNX_TRT(nn.Module):
         self.score_threshold = score_thres
         self.n_classes=n_classes
 
-    def forward(self, output):
+    def forward(self, x):
         
-        if isinstance(output, list):  ## yolov9-c.pt and yolov9-e.pt return list output[0] is prediction of aux branch, output[1] is prediction of main branch.
-            output = output[1]        #  https://github.com/WongKinYiu/yolov9/issues/130#issuecomment-1974792028
+        if isinstance(x, list):  ## yolov9-c.pt and yolov9-e.pt return list output[0] is prediction of aux branch, output[1] is prediction of main branch.
+            x = x[1]        #  https://github.com/WongKinYiu/yolov9/issues/130#issuecomment-1974792028
 
         ## thanks to https://github.com/thaitc-hust/yolov9-tensorrt/blob/main/torch2onnx.py 
-        output = output.permute(0, 2, 1)
-        bboxes_x = output[..., 0:1]
-        bboxes_y = output[..., 1:2]
-        bboxes_w = output[..., 2:3]
-        bboxes_h = output[..., 3:4]
+        x = x.permute(0, 2, 1)
+        bboxes_x = x[..., 0:1]
+        bboxes_y = x[..., 1:2]
+        bboxes_w = x[..., 2:3]
+        bboxes_h = x[..., 3:4]
         bboxes = torch.cat([bboxes_x, bboxes_y, bboxes_w, bboxes_h], dim = -1)
         bboxes = bboxes.unsqueeze(2) # [n_batch, n_bboxes, 4] -> [n_batch, n_bboxes, 1, 4] 
-        obj_conf = output[..., 4:]
+        obj_conf = x[..., 4:]
         scores = obj_conf
         num_det, det_boxes, det_scores, det_classes = TRT_NMS.apply(bboxes, scores, self.background_class, self.box_coding,
                                                                     self.iou_threshold, self.max_obj,
