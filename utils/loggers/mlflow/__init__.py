@@ -30,7 +30,7 @@ class MLflowLogger:
         uri = os.environ.get("MLFLOW_TRACKING_URI")
         LOGGER.info(f"{PREFIX} tracking uri: {uri}")
         mlflow.set_tracking_uri(uri)
-        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME") or self.opt.project
+        experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME") or self.opt.save_dir.split('/')[-2]
         run_name = os.environ.get("MLFLOW_RUN") or self.opt.save_dir.split('/')[-1]
         mlflow.set_experiment(experiment_name)
         mlflow.pytorch.autolog()

@@ -2,12 +2,17 @@
 
 ## Supported platforms
 
+* [TensorBoard](https://www.tensorflow.org/tensorboard)
 * [Weights & Biases](https://wandb.ai/)
 * [ClearML](https://clear.ml/)
 * [Comet](https://www.comet.com/)
 * [MLflow](https://mlflow.org/)
 
 ## How to use ?
+
+### TensorBoard
+
+TODO
 
 ### Weights & Biases
 
