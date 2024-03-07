@@ -67,6 +67,8 @@ YOLOv9 counting: https://github.com/WongKinYiu/yolov9/issues/84#issue-2153904804
 
 YOLOv9 face detection: https://github.com/WongKinYiu/yolov9/issues/121#issue-2160218766
 
+YOLOv9 segmentation onnxruntime: https://github.com/WongKinYiu/yolov9/issues/151#issue-2165667350
+
 Comet logging: https://github.com/WongKinYiu/yolov9/pull/110
 
 MLflow logging: https://github.com/WongKinYiu/yolov9/pull/87
