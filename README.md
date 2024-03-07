@@ -1,4 +1,12 @@
-# YOLOv9
+# YOLOv9 (OUTDATED)
+
+**This repository contains an outdated implementation of YOLOv9. The end-to-end implementation has already been merged into the official YOLOv9 repository.** 
+<br>
+**You can find the merged changes in the following pull request: [End-to-End Implementation](https://github.com/WongKinYiu/yolov9/pull/189)** 
+
+**If you're looking for the latest version of YOLOv9, please visit the official repository: [WongKinYiu/yolov9](https://github.com/WongKinYiu/yolov9)** 
+
+
 
 Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information](https://arxiv.org/abs/2402.13616)
 
