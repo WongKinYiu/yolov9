@@ -199,6 +199,50 @@ See [reparameterization.ipynb](https://github.com/WongKinYiu/yolov9/blob/main/to
 
 Parts of code of [YOLOR-Based Multi-Task Learning](https://arxiv.org/abs/2309.16921) are released in the repository.
 
+<div align="center">
+    <a href="./">
+        <img src="./figure/multitask.png" width="99%"/>
+    </a>
+</div>
+
+#### Object Detection
+
+``` shell
+# coco/labels/{split}/*.txt
+# bbox or polygon (1 instance 1 line)
+python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 640 --cfg models/detect/gelan-c.yaml --weights '' --name gelan-c-det --hyp hyp.scratch-high.yaml --min-items 0 --epochs 300 --close-mosaic 10
+```
+
+#### Instance Segmentation
+
+``` shell
+# coco/labels/{split}/*.txt
+# polygon (1 instance 1 line)
+python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/segment/gelan-c-seg.yaml --weights '' --name gelan-c-seg --hyp hyp.scratch-high.yaml --epochs 300 --close-mosaic 10 --no-overlap
+```
+
+#### Panoptic Segmentation
+
+``` shell
+# coco/labels/{split}/*.txt
+# polygon (1 instance 1 line)
+# coco/stuff/{split}/*.txt
+# polygon (1 semantic 1 line)
+python panoptic/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/panoptic/gelan-c-pan.yaml --weights '' --name gelan-c-pan --hyp hyp.scratch-high.yaml --epochs 300 --close-mosaic 10 --no-overlap
+```
+
+#### Image Captioning (not yet released)
+
+``` shell
+# coco/labels/{split}/*.txt
+# polygon (1 instance 1 line)
+# coco/stuff/{split}/*.txt
+# polygon (1 semantic 1 line)
+# coco/annotations/*.json
+# json (1 split 1 file)
+python caption/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/caption/gelan-c-cap.yaml --weights '' --name gelan-c-cap --hyp hyp.scratch-high.yaml --epochs 300 --close-mosaic 10 --no-overlap
+```
+
 
 ## Acknowledgements
 
