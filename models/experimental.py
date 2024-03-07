@@ -154,22 +154,27 @@ class ONNX_ORT(nn.Module):
         self.n_classes=n_classes
 
     def forward(self, x):
-        boxes = x[:, :, :4]
-        conf = x[:, :, 4:5]
-        scores = x[:, :, 5:]
-        if self.n_classes == 1:
-            scores = conf # for models with one class, cls_loss is 0 and cls_conf is always 0.5,
-                                 # so there is no need to multiplicate.
-        else:
-            scores *= conf  # conf = obj_conf * cls_conf
-        boxes @= self.convert_matrix
+        ## https://github.com/thaitc-hust/yolov9-tensorrt/blob/main/torch2onnx.py
+        ## thanks https://github.com/thaitc-hust
+        if isinstance(x, list):  ## yolov9-c.pt and yolov9-e.pt return list
+            x = x[1]
+        x = x.permute(0, 2, 1)
+        bboxes_x = x[..., 0:1]
+        bboxes_y = x[..., 1:2]
+        bboxes_w = x[..., 2:3]
+        bboxes_h = x[..., 3:4]
+        bboxes = torch.cat([bboxes_x, bboxes_y, bboxes_w, bboxes_h], dim = -1)
+        bboxes = bboxes.unsqueeze(2) # [n_batch, n_bboxes, 4] -> [n_batch, n_bboxes, 1, 4]
+        obj_conf = x[..., 4:]
+        scores = obj_conf
+        bboxes @= self.convert_matrix
         max_score, category_id = scores.max(2, keepdim=True)
         dis = category_id.float() * self.max_wh
-        nmsbox = boxes + dis
+        nmsbox = bboxes + dis
         max_score_tp = max_score.transpose(1, 2).contiguous()
         selected_indices = ORT_NMS.apply(nmsbox, max_score_tp, self.max_obj, self.iou_threshold, self.score_threshold)
         X, Y = selected_indices[:, 0], selected_indices[:, 2]
-        selected_boxes = boxes[X, Y, :]
+        selected_boxes = bboxes[X, Y, :]
         selected_categories = category_id[X, Y, :].float()
         selected_scores = max_score[X, Y, :]
         X = X.unsqueeze(1).float()
