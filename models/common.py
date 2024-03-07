@@ -1184,6 +1184,18 @@ class Proto(nn.Module):
         return self.cv3(self.cv2(self.upsample(self.cv1(x))))
 
 
+class UConv(nn.Module):
+    def __init__(self, c1, c_=256, c2=256):  # ch_in, number of protos, number of masks
+        super().__init__()
+        
+        self.cv1 = Conv(c1, c_, k=3)
+        self.cv2 = nn.Conv2d(c_, c2, 1, 1)
+        self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+
+    def forward(self, x):
+        return self.up(self.cv2(self.cv1(x)))
+
+
 class Classify(nn.Module):
     # YOLO classification head, i.e. x(b,c1,20,20) to x(b,c2)
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1):  # ch_in, ch_out, kernel, stride, padding, groups
