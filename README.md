@@ -2,10 +2,11 @@
 
 Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information](https://arxiv.org/abs/2402.13616)
 
+[![arxiv.org](http://img.shields.io/badge/cs.CV-arXiv%3A2402.13616-B31B1B.svg)](https://arxiv.org/abs/2402.13616)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/kadirnar/Yolov9)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/merve/yolov9)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/roboflow-ai/notebooks/blob/main/notebooks/train-yolov9-object-detection-on-custom-dataset.ipynb)
-[![arxiv.org](http://img.shields.io/badge/cs.CV-arXiv%3A2402.13616-B31B1B.svg)](https://arxiv.org/abs/2402.13616)
+[![OpenCV](https://img.shields.io/badge/OpenCV-BlogPost-black?logo=opencv&labelColor=blue&color=black)](https://learnopencv.com/yolov9-advancing-the-yolo-legacy/)
 
 <div align="center">
     <a href="./">
@@ -20,6 +21,7 @@ MS COCO
 
 | Model | Test Size | AP<sup>val</sup> | AP<sub>50</sub><sup>val</sup> | AP<sub>75</sub><sup>val</sup> | Param. | FLOPs |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: |
+| [**YOLOv9-N (dev)**]() | 640 | **38.3%** | **53.1%** | **41.3%** | **2.0M** | **7.7G** |
 | [**YOLOv9-S**]() | 640 | **46.8%** | **63.4%** | **50.7%** | **7.1M** | **26.4G** |
 | [**YOLOv9-M**]() | 640 | **51.4%** | **68.1%** | **56.1%** | **20.0M** | **76.3G** |
 | [**YOLOv9-C**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/yolov9-c-converted.pt) | 640 | **53.0%** | **70.2%** | **57.8%** | **25.3M** | **102.1G** |
@@ -62,6 +64,10 @@ YOLOv9 DeepSORT: https://github.com/WongKinYiu/yolov9/issues/98#issue-2156172319
 YOLOv9 counting: https://github.com/WongKinYiu/yolov9/issues/84#issue-2153904804
 
 YOLOv9 face detection: https://github.com/WongKinYiu/yolov9/issues/121#issue-2160218766
+
+Comet logging: https://github.com/WongKinYiu/yolov9/pull/110
+
+MLflow logging: https://github.com/WongKinYiu/yolov9/pull/87
 
 AnyLabeling tool: https://github.com/WongKinYiu/yolov9/issues/48#issue-2152139662
 
