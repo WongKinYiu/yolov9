@@ -116,7 +116,7 @@ cd /yolov9
 python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c-converted.pt' --save-json --name yolov9_c_c_640_val
 
 # evaluate yolov9 models
-#python val_dual.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c.pt' --save-json --name yolov9_c_640_val
+# python val_dual.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c.pt' --save-json --name yolov9_c_640_val
 
 # evaluate gelan models
 # python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './gelan-c.pt' --save-json --name gelan_c_640_val
@@ -174,6 +174,26 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 ## Re-parameterization
 
 See [reparameterization.ipynb](https://github.com/WongKinYiu/yolov9/blob/main/tools/reparameterization.ipynb).
+
+
+## Inference
+
+``` shell
+# inference converted yolov9 models
+python detect.py --source './data/images/horses.jpg' --img 640 --device 0 --weights './yolov9-c-converted.pt' --name yolov9_c_c_640_detect
+
+# inference yolov9 models
+# python detect_dual.py --source './data/images/horses.jpg' --img 640 --device 0 --weights './yolov9-c.pt' --name yolov9_c_640_detect
+
+# inference gelan models
+# python detect.py --source './data/images/horses.jpg' --img 640 --device 0 --weights './gelan-c.pt' --name gelan_c_c_640_detect
+```
+
+<div align="center">
+    <a href="./">
+        <img src="./figure/horses_prediction.jpg" width="79%"/>
+    </a>
+</div>
 
 
 ## Citation
