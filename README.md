@@ -245,6 +245,10 @@ python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --im
 
 #### Panoptic Segmentation
 
+[`gelan-c-pan.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt)
+
+`object detection` `instance segmentation` `semantic segmentation` `stuff segmentation` `panoptic segmentation`
+
 ``` shell
 # coco/labels/{split}/*.txt
 # polygon (1 instance 1 line)
