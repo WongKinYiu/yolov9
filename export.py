@@ -14,6 +14,11 @@ import pandas as pd
 import torch
 from torch.utils.mobile_optimizer import optimize_for_mobile
 
+
+import models.quantize as quantize
+
+from pytorch_quantization import nn as quant_nn
+
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLO root directory
 if str(ROOT) not in sys.path:
@@ -90,6 +95,13 @@ def export_onnx(model, im, file, opset, dynamic, simplify, prefix=colorstr('ONNX
     check_requirements('onnx')
     import onnx
 
+    is_model_qat=False
+    for i in range(0, len(model.model)):
+        layer = model.model[i]
+        if quantize.have_quantizer(layer):
+            is_model_qat=True
+            break
+
     LOGGER.info(f'\n{prefix} starting export with onnx {onnx.__version__}...')
     f = file.with_suffix('.onnx')
 
@@ -101,17 +113,37 @@ def export_onnx(model, im, file, opset, dynamic, simplify, prefix=colorstr('ONNX
             dynamic['output1'] = {0: 'batch', 2: 'mask_height', 3: 'mask_width'}  # shape(1,32,160,160)
         elif isinstance(model, DetectionModel):
             dynamic['output0'] = {0: 'batch', 1: 'anchors'}  # shape(1,25200,85)
+    
+    if is_model_qat:
+        warnings.filterwarnings("ignore")
+        LOGGER.info(f'{prefix} Model QAT Detected ...')
+        quantize.initialize()
+        quantize.replace_custom_module_forward(model)
+        quant_nn.TensorQuantizer.use_fb_fake_quant = True
+        model.float()
+        with torch.no_grad():
+            torch.onnx.export(
+                model.cpu() if dynamic else model,  # --dynamic only compatible with cpu
+                im.cpu() if dynamic else im,
+                f,
+                verbose=False,
+                opset_version=13,
+                do_constant_folding=True,
+                input_names=['images'],
+                output_names=output_names,
+                dynamic_axes=dynamic or None)
 
-    torch.onnx.export(
-        model.cpu() if dynamic else model,  # --dynamic only compatible with cpu
-        im.cpu() if dynamic else im,
-        f,
-        verbose=False,
-        opset_version=opset,
-        do_constant_folding=True,
-        input_names=['images'],
-        output_names=output_names,
-        dynamic_axes=dynamic or None)
+    else: 
+        torch.onnx.export(
+            model.cpu() if dynamic else model,  # --dynamic only compatible with cpu
+            im.cpu() if dynamic else im,
+            f,
+            verbose=False,
+            opset_version=opset,
+            do_constant_folding=True,
+            input_names=['images'],
+            output_names=output_names,
+            dynamic_axes=dynamic or None)
 
     # Checks
     model_onnx = onnx.load(f)  # load onnx model
@@ -145,6 +177,14 @@ def export_onnx_end2end(model, im, file, simplify, topk_all, iou_thres, conf_thr
     # YOLO ONNX export
     check_requirements('onnx')
     import onnx
+    
+    is_model_qat=False
+    for i in range(0, len(model.model)):
+        layer = model.model[i]
+        if quantize.have_quantizer(layer):
+            is_model_qat=True
+            break
+    
     LOGGER.info(f'\n{prefix} starting export with onnx {onnx.__version__}...')
     f = os.path.splitext(file)[0] + "-end2end.onnx"
     batch_size = 'batch'
@@ -163,17 +203,40 @@ def export_onnx_end2end(model, im, file, simplify, topk_all, iou_thres, conf_thr
     output_names = ['num_dets', 'det_boxes', 'det_scores', 'det_classes']
     shapes = [ batch_size, 1,  batch_size,  topk_all, 4,
                batch_size,  topk_all,  batch_size,  topk_all]
+    
 
-    torch.onnx.export(model, 
-                          im, 
-                          f, 
-                          verbose=False, 
-                          export_params=True,       # store the trained parameter weights inside the model file
-                          opset_version=12, 
-                          do_constant_folding=True, # whether to execute constant folding for optimization
-                          input_names=['images'],
-                          output_names=output_names,
-                          dynamic_axes=dynamic_axes)
+    
+    if is_model_qat:
+        warnings.filterwarnings("ignore")
+        quantize.initialize()
+        quantize.replace_custom_module_forward(model)
+        model.float()
+        quant_nn.TensorQuantizer.use_fb_fake_quant = True
+        LOGGER.info(f'{prefix} Model QAT Detected ...')
+        model.eval()
+        with torch.no_grad():
+            torch.onnx.export(model, 
+                            im, 
+                            f, 
+                            verbose=False, 
+                            export_params=True,       # store the trained parameter weights inside the model file
+                            opset_version=13, 
+                            do_constant_folding=True, # whether to execute constant folding for optimization
+                            input_names=['images'],
+                            output_names=output_names,
+                            dynamic_axes=dynamic_axes)
+        quant_nn.TensorQuantizer.use_fb_fake_quant = False
+    else:
+        torch.onnx.export(model, 
+                    im, 
+                    f, 
+                    verbose=False, 
+                    export_params=True,       # store the trained parameter weights inside the model file
+                    opset_version=12, 
+                    do_constant_folding=True, # whether to execute constant folding for optimization
+                    input_names=['images'],
+                    output_names=output_names,
+                    dynamic_axes=dynamic_axes)
 
     # Checks
     model_onnx = onnx.load(f)  # load onnx model
