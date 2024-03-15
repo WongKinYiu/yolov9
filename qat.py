@@ -38,13 +38,35 @@ RANK = int(os.getenv('RANK', -1))
 WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
 GIT_INFO = None
 
-class SummaryTool:
+
+class ReportTool:
     def __init__(self, file):
         self.file = file
+        if os.path.exists(self.file):
+            open(self.file, 'w').close()
         self.data = []
+
+    def load_data(self):
+        try:
+            return json.load(open(self.file, "r"))
+        except FileNotFoundError:
+            return []
 
     def append(self, item):
         self.data.append(item)
+        self.save_data()
+
+    def update(self, item):
+        for i, data_item in enumerate(self.data):
+            if data_item[0] == item[0]:
+                self.data[i] = item
+                break
+        else:
+            # Se não encontrar, adiciona como um novo item
+            self.append(item)
+        self.save_data()
+
+    def save_data(self):
         json.dump(self.data, open(self.file, "w"), indent=4)
 
 
@@ -198,20 +220,22 @@ def run_quantize(weights, data, imgsz, batch_size, hyp, device, no_last_layer, s
     
     ### This rule is disabled - This allow user disable qat per Layers ###
     # This rule has been disabled, but it remains in the code to maintain compatibility or future implementation.
+    """
     ignore_layer=-1
     if ignore_layer > -1:
         ignore_policy=f"model\.{ignore_layer}\.cv\d+\.\d+\.\d+(\.conv)?"
     else:
         ignore_policy=f"model\.9999999999\.cv\d+\.\d+\.\d+(\.conv)?"   
+    """ 
     ### End ####### 
         
     quantize.replace_custom_module_forward(model)
-    quantize.replace_to_quantization_module(model, ignore_policy=ignore_policy)
+    quantize.replace_to_quantization_module(model, ignore_policy="disabled")  ## disabled because was not implemented 
     quantize.apply_custom_rules_to_quantizer(model, lambda model, file: export_onnx(model, file, im))
     quantize.calibrate_model(model, train_dataloader, device)
 
-    summary_file = os.path.join(save_dir, "summary.json")
-    summary = SummaryTool(summary_file)
+    report_file = os.path.join(save_dir, "report.json")
+    report = ReportTool(report_file)
 
     if no_eval_origin:
         LOGGER.info(f'\n{prefix} Evaluating Origin...')
@@ -220,7 +244,7 @@ def run_quantize(weights, data, imgsz, batch_size, hyp, device, no_last_layer, s
             result_eval_origin = evaluate_dataset(model_eval, val_dataloader, imgsz, data_dict, single_cls, save_dir, is_coco )
             eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in result_eval_origin)
             LOGGER.info(f'\n{prefix} Eval Origin  - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}')
-            summary.append(["Origin", eval_map])
+            report.append(["Origin", weights, eval_map, eval_map50,eval_mp, eval_mr  ])
 
     if no_eval_ptq:
         
@@ -236,11 +260,11 @@ def run_quantize(weights, data, imgsz, batch_size, hyp, device, no_last_layer, s
         
         result_eval_ptq = evaluate_dataset(model_eval, val_dataloader, imgsz, data_dict, single_cls, save_dir, is_coco )
         eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in result_eval_ptq)
-        summary.append(["PQT", eval_map])
-        LOGGER.info(f'\n{prefix} Eval PQT - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}')
-        ptq_weights = w /  f'ptq_{os.path.basename(weights)}'
+        LOGGER.info(f'\n{prefix} Eval PTQ - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}')
+        ptq_weights = w /  f'ptq_ap_{eval_map}_{os.path.basename(weights)}'
         torch.save({"model": model_eval},f'{ptq_weights}')
         LOGGER.info(f'\n{prefix} PTQ, weights saved as {ptq_weights} ({file_size(ptq_weights):.1f} MB)')
+        report.append(["PTQ", str(ptq_weights), eval_map, eval_map50,eval_mp, eval_mr ])
 
     best_map = 0
 
@@ -252,17 +276,18 @@ def run_quantize(weights, data, imgsz, batch_size, hyp, device, no_last_layer, s
         with torch.no_grad():  
             eval_result = evaluate_dataset(model_eval, val_dataloader, imgsz, data_dict, single_cls, save_dir, is_coco )
             eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in eval_result)
-            summary.append([f"QAT{epoch}", eval_map])
-        #print_map_scores(summary_file)
-        qat_weights = w /  f'qat_{epoch}_{os.path.basename(weights)}'
+        qat_weights = w /  f'qat_ep_{epoch}_ap_{eval_map}_{os.path.basename(weights)}'
         torch.save({"model": model_eval},f'{qat_weights}')
         LOGGER.info(f'\n{prefix} Epoch-{epoch}, weights saved as {qat_weights} ({file_size(qat_weights):.1f} MB)')
+        report.append([f"QAT-{epoch}", str(qat_weights), eval_map, eval_map50,eval_mp, eval_mr ])
+
         if eval_map > best_map:
             best_map = eval_map
             result_eval_qat_best=eval_result
             qat_weights = w /  f'qat_best_{os.path.basename(weights)}'
             torch.save({"model": model_eval}, f'{qat_weights}')
             LOGGER.info(f'{prefix} QAT Best, weights saved as {qat_weights} ({file_size(qat_weights):.1f} MB)')
+            report.update(["QAT-Best", str(qat_weights), eval_map, eval_map50,eval_mp, eval_mr ])
 
         eval_results = [result_eval_origin, result_eval_ptq, result_eval_qat_best]
          
@@ -274,9 +299,9 @@ def run_quantize(weights, data, imgsz, batch_size, hyp, device, no_last_layer, s
                 if idx == 0:
                     LOGGER.info(f'Origin     | {eval_map:<8} | {eval_map50:<8} | {eval_mp:<10} | {eval_mr:<8}')
                 if idx == 1:
-                    LOGGER.info(f'PQT        | {eval_map:<8} | {eval_map50:<8} | {eval_mp:<10} | {eval_mr:<8}')
+                    LOGGER.info(f'PTQ        | {eval_map:<8} | {eval_map50:<8} | {eval_mp:<10} | {eval_mr:<8}')
                 if idx == 2:
-                    LOGGER.info(f'QAT (Best) | {eval_map:<8} | {eval_map50:<8} | {eval_mp:<10} | {eval_mr:<8}\n')
+                    LOGGER.info(f'QAT - Best | {eval_map:<8} | {eval_map50:<8} | {eval_mp:<10} | {eval_mr:<8}\n')
             
         eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in eval_result)
         LOGGER.info(f'\n{prefix} Eval - Epoch {epoch} | AP: {eval_map}  | AP50: {eval_map50} | Precision: {eval_mp} | Recall: {eval_mr}\n')
@@ -356,8 +381,8 @@ def run_sensitive_analysis(weights, device, data, imgsz, batch_size, hyp, save_d
     quantize.replace_to_quantization_module(model)
     quantize.calibrate_model(model, train_dataloader, device)
 
-    summary_file=os.path.join(save_dir , "summary-sensitive-analysis.json")
-    summary = SummaryTool(summary_file)
+    report_file=os.path.join(save_dir , "summary-sensitive-analysis.json")
+    report = ReportTool(report_file)
 
     model_eval = deepcopy(model).eval() 
     LOGGER.info(f'\n{prefix} Evaluating PTQ...')
@@ -365,8 +390,8 @@ def run_sensitive_analysis(weights, device, data, imgsz, batch_size, hyp, save_d
     eval_result = evaluate_dataset(model_eval, val_dataloader, imgsz, data_dict, single_cls, save_dir, is_coco )
     eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in eval_result)
 
-    LOGGER.info(f'\n{prefix} Eval PQT - QAT enabled on All Layers - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}')
-    summary.append([eval_map, "PQT"])
+    LOGGER.info(f'\n{prefix} Eval PTQ - QAT enabled on All Layers - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}')
+    report.append([eval_map, "PTQ"])
     LOGGER.info(f'{prefix} Sensitive analysis by each layer. Layers Detected: {len(model.model)}')
 
     for i in range(0, len(model.model)):
@@ -377,15 +402,15 @@ def run_sensitive_analysis(weights, device, data, imgsz, batch_size, hyp, save_d
             model_eval = deepcopy(model).eval()   
             eval_result = evaluate_dataset(model_eval, val_dataloader, imgsz, data_dict, single_cls, save_dir, is_coco )
             eval_mp, eval_mr, eval_map50, eval_map= tuple(round(x, 4) for x in eval_result)
-            LOGGER.info(f'\n{prefix} Eval PQT - QAT disabled on Layer model.{i} - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}\n')
-            summary.append([eval_map, f"model.{i}"]) 
+            LOGGER.info(f'\n{prefix} Eval PTQ - QAT disabled on Layer model.{i} - AP: {eval_map} AP50: {eval_map50} Precision: {eval_mp} Recall: {eval_mr}\n')
+            report.append([eval_map, f"model.{i}"]) 
             quantize.enable_quantization(layer).apply()
         else:
             LOGGER.info(f'{prefix} Ignored Layer model.{i} because it is {type(layer)}')
     
-    summary = sorted(summary.data, key=lambda x:x[0], reverse=True)
+    report = sorted(report.data, key=lambda x:x[0], reverse=True)
     print("Sensitive summary:")
-    for n, (ap, name) in enumerate(summary[:10]):
+    for n, (ap, name) in enumerate(report[:10]):
         print(f"Top{n}: Using fp16 {name}, ap = {ap:.5f}")
 
 

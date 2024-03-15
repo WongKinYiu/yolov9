@@ -40,13 +40,15 @@ def find_with_output_node(model, name):
         if len(node.output) > 0 and name in node.output:
             return node
 
-# def find_with_no_change_parent_node(model, node):
-#     parent = find_with_output_node(model, node.input[0])
-#     if parent is not None:
-#         print("Parent:", parent.op_type)
-#         if parent.op_type in ["Concat", "MaxPool", "AveragePool", "Slice"]:
-#             return find_with_no_change_parent_node(model, parent)
-#     return parent
+""" 
+def find_with_no_change_parent_node(model, node):
+    parent = find_with_output_node(model, node.input[0])
+    if parent is not None:
+        print("Parent:", parent.op_type)
+        if parent.op_type in ["Concat", "MaxPool", "AveragePool", "Slice"]:
+            return find_with_no_change_parent_node(model, parent)
+    return parent 
+"""
 
 def find_quantizelinear_conv(model, qnode):
     dq   = find_with_input_node(model, qnode.output[0])

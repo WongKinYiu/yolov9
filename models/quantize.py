@@ -55,6 +55,7 @@ import models
 
 ### These classes has not been utilized yet; it's still undergoing testing. #####
 ### BEGIN #####
+""" 
 class QuantSiLU(torch.nn.Module, quant_nn_utils.QuantInputMixin):
     def __init__(self, **kwargs):
         super(QuantSiLU, self).__init__()
@@ -83,7 +84,8 @@ class QuantUpsample(torch.nn.Module):
             self._input_quantizer = quant_nn.TensorQuantizer(QuantDescriptor())
             
         def forward(self, x):
-            return F.interpolate(self._input_quantizer(x), self.size, self.scale_factor, self.mode)
+            return F.interpolate(self._input_quantizer(x), self.size, self.scale_factor, self.mode) 
+"""
            
 ### END #####
         
@@ -257,13 +259,14 @@ def repnbottleneck_quant_forward(self, x):
     return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
 
+### These def has not been utilized yet; it's still undergoing testing. #####
+### Begin #### 
+""" 
 def concat_quant_forward(self, x):
         if hasattr(self, "concatop"):
             return self.concatop(x, self.d)
         return torch.cat(x, self.d)
 
-### These def has not been utilized yet; it's still undergoing testing. #####
-### Begin #### 
 def upsample_quant_forward(self, x):
         if hasattr(self, "upsampleop"):
             return self.upsampleop(x)
@@ -278,7 +281,7 @@ def repncspelan4_qaunt_forward(self, x):
             y = list(self.cv1(x).split((self.c, self.c), 1))
             y.extend(m(y[-1]) for m in [self.cv2, self.cv3])
             return self.cv4(torch.cat(y, 1))
-        
+"""
 ### End #### 
 
 def apply_custom_rules_to_quantizer(model : torch.nn.Module, export_onnx : Callable):
