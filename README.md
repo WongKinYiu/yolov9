@@ -40,6 +40,8 @@ ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-19605195
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143#issuecomment-1975049660 https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004 https://github.com/WongKinYiu/yolov9/issues/143#issue-2164002309
 
+QAT TensirRT: https://github.com/WongKinYiu/yolov9/issues/253#issue-2189520073
+
 OpenVINO: https://github.com/WongKinYiu/yolov9/issues/164#issue-2168540003
 
 C# ONNX inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
