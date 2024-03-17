@@ -28,7 +28,7 @@ MS COCO
 | [**YOLOv9-E**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/yolov9-e-converted.pt) | 640 | **55.6%** | **72.8%** | **60.6%** | **57.3M** | **189.0G** |
 <!-- | [**YOLOv9 (ReLU)**]() | 640 | **51.9%** | **69.1%** | **56.5%** | **25.3M** | **102.1G** | -->
 
-<!-- small and medium models will be released after the paper be accepted and published. -->
+<!-- tiny, small, and medium models will be released after the paper be accepted and published. -->
 
 ## Useful Links
 
@@ -232,17 +232,25 @@ Parts of code of [YOLOR-Based Multi-Task Learning](https://arxiv.org/abs/2309.16
 
 #### Object Detection
 
+[`gelan-c-det.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-det.pt)
+
+`object detection`
+
 ``` shell
 # coco/labels/{split}/*.txt
 # bbox or polygon (1 instance 1 line)
 python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 640 --cfg models/detect/gelan-c.yaml --weights '' --name gelan-c-det --hyp hyp.scratch-high.yaml --min-items 0 --epochs 300 --close-mosaic 10
 ```
 
-<!--| Model | Test Size | AP<sup>box</sup> |
+| Model | Test Size | AP<sup>box</sup> |
 | :-- | :-: | :-: |
-| [**GELAN-C-DET**]() | 640 | **-%** |-->
+| [**GELAN-C-DET**]() | 640 | **52.3%** |
 
 #### Instance Segmentation
+
+[`gelan-c-seg.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-seg.pt)
+
+`object detection` `instance segmentation`
 
 ``` shell
 # coco/labels/{split}/*.txt
@@ -250,9 +258,9 @@ python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 64
 python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/segment/gelan-c-seg.yaml --weights '' --name gelan-c-seg --hyp hyp.scratch-high.yaml --no-overlap --epochs 300 --close-mosaic 10
 ```
 
-<!--| Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  |
+| Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  |
 | :-- | :-: | :-: | :-: |
-| [**GELAN-C-SEG**]() | 640 | **-%** | **-%** |-->
+| [**GELAN-C-SEG**]() | 640 | **52.3%** | **42.4%** |
 
 #### Panoptic Segmentation
 
@@ -268,11 +276,15 @@ python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --im
 python panoptic/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/panoptic/gelan-c-pan.yaml --weights '' --name gelan-c-pan --hyp hyp.scratch-high.yaml --no-overlap --epochs 300 --close-mosaic 10
 ```
 
-<!--| Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  | mIoU<sup>semantic</sup>  | mIoU<sup>stuff</sup> | PQ<sup>panoptic</sup> |
+| Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  | mIoU<sub>164k</sub><sup>semantic</sup> | mIoU<sup>stuff</sup> | PQ<sup>panoptic</sup> |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: |
-| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | **52.6%** | **42.5%** | **-** | **52.7%** | **-** |-->
+| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | **52.6%** | **42.5%** | **39.0** | **52.7%** | **-** |
 
 #### Image Captioning (not yet released)
+
+<!--[`gelan-c-cap.pt`]()-->
+
+<!--`object detection` `instance segmentation` `semantic segmentation` `stuff segmentation` `panoptic segmentation` `image captioning`-->
 
 ``` shell
 # coco/labels/{split}/*.txt
