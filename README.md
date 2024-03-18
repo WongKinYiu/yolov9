@@ -282,7 +282,7 @@ python panoptic/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --i
 
 | Model | Test Size | Param. | FLOPs | AP<sup>box</sup> | AP<sup>mask</sup>  | mIoU<sup>semantic</sup> | mIoU<sup>stuff</sup> | PQ<sup>panoptic</sup> |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | 27.6M | 146.7G | **52.6%** | **42.5%** | **39.3%** | **52.7%** | **39.4%** |
+| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | 27.6M | 146.7G | **52.6%** | **42.5%** | **39.0%** | **52.7%** | **39.4%** |
 <!--| [**YOLOv9-C-PAN**]() | 640 | 28.8M | 187.0G | **%** | **%** | **** | **%** | **%** |-->
 
 * validate on COCO 164k data.
