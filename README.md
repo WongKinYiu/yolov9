@@ -244,10 +244,10 @@ Parts of code of [YOLOR-Based Multi-Task Learning](https://arxiv.org/abs/2309.16
 python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 640 --cfg models/detect/gelan-c.yaml --weights '' --name gelan-c-det --hyp hyp.scratch-high.yaml --min-items 0 --epochs 300 --close-mosaic 10
 ```
 
-| Model | Test Size | AP<sup>box</sup> |
-| :-- | :-: | :-: |
-| [**GELAN-C-DET**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-det.pt) | 640 | **52.3%** |
-| [**YOLOv9-C-DET**]() | 640 | **53.0%** |
+| Model | Test Size | Param. | FLOPs | AP<sup>box</sup> |
+| :-- | :-: | :-: | :-: | :-: |
+| [**GELAN-C-DET**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-det.pt) | 640 | 25.3M | 102.1G |**52.3%** |
+| [**YOLOv9-C-DET**]() | 640 | 25.3M | 102.1G | **53.0%** |
 
 #### Instance Segmentation
 
@@ -261,10 +261,10 @@ python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 64
 python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --img 640 --cfg models/segment/gelan-c-seg.yaml --weights '' --name gelan-c-seg --hyp hyp.scratch-high.yaml --no-overlap --epochs 300 --close-mosaic 10
 ```
 
-| Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  |
-| :-- | :-: | :-: | :-: |
-| [**GELAN-C-SEG**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-seg.pt) | 640 | **52.3%** | **42.4%** |
-| [**YOLOv9-C-SEG**]() | 640 | **53.3%** | **43.5%** |
+| Model | Test Size | Param. | FLOPs | AP<sup>box</sup> | AP<sup>mask</sup>  |
+| :-- | :-: | :-: | :-: | :-: | :-: |
+| [**GELAN-C-SEG**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-seg.pt) | 640 | 27.4M | 144.6G | **52.3%** | **42.4%** |
+| [**YOLOv9-C-SEG**]() | 640 | 27.4M | 144.6G | **53.3%** | **43.5%** |
 
 #### Panoptic Segmentation
 
