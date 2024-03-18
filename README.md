@@ -62,6 +62,8 @@ YOLOv9 ROS TensorRT: https://github.com/WongKinYiu/yolov9/issues/145#issue-21642
 
 YOLOv9 Julia: https://github.com/WongKinYiu/yolov9/issues/141#issuecomment-1973710107
 
+YOLOv9 MLX: https://github.com/WongKinYiu/yolov9/issues/258#issue-2190586540
+
 YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-2153512879
 
 YOLOv9 DeepSORT: https://github.com/WongKinYiu/yolov9/issues/98#issue-2156172319
