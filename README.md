@@ -246,7 +246,8 @@ python train.py --workers 8 --device 0 --batch 32 --data data/coco.yaml --img 64
 
 | Model | Test Size | AP<sup>box</sup> |
 | :-- | :-: | :-: |
-| [**GELAN-C-DET**]() | 640 | **52.3%** |
+| [**GELAN-C-DET**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-det.pt) | 640 | **52.3%** |
+| [**YOLOv9-C-DET**]() | 640 | **53.0%** |
 
 #### Instance Segmentation
 
@@ -262,7 +263,8 @@ python segment/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --im
 
 | Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  |
 | :-- | :-: | :-: | :-: |
-| [**GELAN-C-SEG**]() | 640 | **52.3%** | **42.4%** |
+| [**GELAN-C-SEG**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-seg.pt) | 640 | **52.3%** | **42.4%** |
+| [**YOLOv9-C-SEG**]() | 640 | **53.3%** | **43.5%** |
 
 #### Panoptic Segmentation
 
@@ -280,7 +282,7 @@ python panoptic/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --i
 
 | Model | Test Size | AP<sup>box</sup> | AP<sup>mask</sup>  | mIoU<sub>164k</sub><sup>semantic</sup> | mIoU<sup>stuff</sup> | PQ<sup>panoptic</sup> |
 | :-- | :-: | :-: | :-: | :-: | :-: | :-: |
-| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | **52.6%** | **42.5%** | **39.0** | **52.7%** | **-** |
+| [**GELAN-C-PAN**](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c-pan.pt) | 640 | **52.6%** | **42.5%** | **39.0** | **52.7%** | **39.4%** |
 
 #### Image Captioning (not yet released)
 
