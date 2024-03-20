@@ -111,6 +111,16 @@ cd /yolov9
 
 </details>
 
+Conda virtual environment (recommend)
+<details><summary> <b>Expand</b> </summary>
+
+```
+apt update
+apt install -y zip htop screen libgl1-mesa-glx
+conda env create -f .environment.yaml
+```
+
+</details>
 
 ## Evaluation
 
@@ -321,3 +331,7 @@ python caption/train.py --workers 8 --device 0 --batch 32  --data coco.yaml --im
 * [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
 
 </details>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=WongKinYiu/yolov9&type=Date)](https://star-history.com/#WongKinYiu/yolov9&Date)
