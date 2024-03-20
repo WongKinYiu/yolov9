@@ -12,7 +12,7 @@ from utils.loggers.wandb.wandb_utils import WandbLogger
 from utils.plots import plot_images, plot_labels, plot_results
 from utils.torch_utils import de_parallel
 
-LOGGERS = ('csv', 'tb', 'wandb', 'clearml', 'comet')  # *.csv, TensorBoard, Weights & Biases, ClearML
+LOGGERS = ('csv', 'tb', 'wandb', 'clearml', 'comet', 'mlflow')  # *.csv, TensorBoard, Weights & Biases, ClearML, MLflow
 RANK = int(os.getenv('RANK', -1))
 
 try:
@@ -47,6 +47,14 @@ try:
 
 except (ModuleNotFoundError, ImportError, AssertionError):
     comet_ml = None
+
+try:
+    import mlflow
+
+    assert hasattr(mlflow, '__version__')  # verify package import not local dir
+    from utils.loggers.mlflow import MLflowLogger
+except (ImportError, AssertionError):
+    mlflow = None
 
 
 class Loggers():
@@ -91,6 +99,10 @@ class Loggers():
             prefix = colorstr('Comet: ')
             s = f"{prefix}run 'pip install comet_ml' to automatically track and visualize YOLO 🚀 runs in Comet"
             self.logger.info(s)
+        if not mlflow:
+            prefix = colorstr('MLflow: ')
+            s = f"{prefix}run 'pip install mlflow' to automatically track and visualize YOLO 🚀 runs in MLflow"
+            self.logger.info(s)
         # TensorBoard
         s = self.save_dir
         if 'tb' in self.include and not self.opt.evolve:
@@ -129,6 +141,12 @@ class Loggers():
         else:
             self.comet_logger = None
 
+        # MLflow
+        if mlflow and 'mlflow' in self.include:
+            self.mlflow = MLflowLogger(self.opt, self.hyp) 
+        else:
+            self.mlflow = None
+
     @property
     def remote_dataset(self):
         # Get data_dict if custom dataset artifact link is provided
@@ -139,6 +157,8 @@ class Loggers():
             data_dict = self.wandb.data_dict
         if self.comet_logger:
             data_dict = self.comet_logger.data_dict
+        if self.mlflow:
+            data_dict = self.mlflow.data_dict
 
         return data_dict
 
@@ -161,6 +181,8 @@ class Loggers():
             #    pass  # ClearML saves these images automatically using hooks
             if self.comet_logger:
                 self.comet_logger.on_pretrain_routine_end(paths)
+            if self.mlflow:
+                self.mlflow.on_pretrain_routine_end(paths)
 
     def on_train_batch_end(self, model, ni, imgs, targets, paths, vals):
         log_dict = dict(zip(self.keys[0:3], vals))
@@ -250,6 +272,9 @@ class Loggers():
         if self.comet_logger:
             self.comet_logger.on_fit_epoch_end(x, epoch=epoch)
 
+        if self.mlflow:
+            self.mlflow.on_fit_epoch_end(x, epoch=epoch)
+
     def on_model_save(self, last, epoch, final_epoch, best_fitness, fi):
         # Callback runs on model save event
         if (epoch + 1) % self.opt.save_period == 0 and not final_epoch and self.opt.save_period != -1:
@@ -262,6 +287,9 @@ class Loggers():
 
         if self.comet_logger:
             self.comet_logger.on_model_save(last, epoch, final_epoch, best_fitness, fi)
+
+        if self.mlflow and not final_epoch:
+            self.mlflow.on_model_save(last)
 
     def on_train_end(self, last, best, epoch, results):
         # Callback runs on training end, i.e. saving best model
@@ -294,6 +322,9 @@ class Loggers():
         if self.comet_logger:
             final_results = dict(zip(self.keys[3:10], results))
             self.comet_logger.on_train_end(files, self.save_dir, last, best, epoch, final_results)
+
+        if self.mlflow:
+            self.mlflow.on_train_end(self.save_dir)
 
     def on_params_update(self, params: dict):
         # Update hyperparams or configs of the experiment
