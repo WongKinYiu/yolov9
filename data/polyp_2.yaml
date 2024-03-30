@@ -1,0 +1,18 @@
+# COCO 2017 dataset http://cocodataset.org
+
+# download command/URL (optional)
+# download: bash ./scripts/get_coco.sh
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+# train: ./coco/train2017.txt  # 118287 images
+# val: ./coco/val2017.txt  # 5000 images
+# test: ./coco/test-dev2017.txt  # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794
+train: /work/u6859530/polyp_detection/dataset2/images/train
+val: /work/u6859530/polyp_detection/dataset2/images/valid
+test: /work/u6859530/polyp_detection/dataset/images/valid
+
+# number of classes
+nc: 2
+
+# class names
+names: [ 'hyperplastic', 'adenoma']

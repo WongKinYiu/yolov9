@@ -164,7 +164,7 @@ def run(
                                        prefix=colorstr(f'{task}: '))[0]
 
     seen = 0
-    confusion_matrix = ConfusionMatrix(nc=nc)
+    confusion_matrix = ConfusionMatrix(nc=nc, conf=conf_thres)
     names = model.names if hasattr(model, 'names') else model.module.names  # get class names
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
@@ -220,9 +220,12 @@ def run(
 
             if npr == 0:
                 if nl:
-                    stats.append((correct, *torch.zeros((2, 0), device=device), labels[:, 0]))
                     if plots:
-                        confusion_matrix.process_batch(detections=None, labels=labels[:, 0])
+                        confusion_matrix.process_batch(None, labels)
+                    stats.append((correct, *torch.zeros((2, 0), device=device), labels[:, 0]))
+                else:
+                    if plots:
+                        confusion_matrix.process_batch(detections=None, labels=None)
                 continue
 
             # Predictions
@@ -239,6 +242,9 @@ def run(
                 correct = process_batch(predn, labelsn, iouv)
                 if plots:
                     confusion_matrix.process_batch(predn, labelsn)
+            else:
+                if plots:
+                    confusion_matrix.process_batch(predn, torch.zeros(1,5))
             stats.append((correct, pred[:, 4], pred[:, 5], labels[:, 0]))  # (correct, conf, pcls, tcls)
 
             # Save/log
