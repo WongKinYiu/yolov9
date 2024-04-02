@@ -93,6 +93,7 @@ def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2 ** 32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+    os.sched_setaffinity(0, range(os.cpu_count()))
 
 
 def create_dataloader(path,
