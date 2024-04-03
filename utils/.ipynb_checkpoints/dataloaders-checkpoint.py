@@ -667,7 +667,7 @@ class LoadImagesAndLabels(Dataset):
         if self.augment:
             hyp['mosaic'] = hyp['mosaic'] if self.augment and not self.rect else 0.0
             hyp['mixup'] = hyp['mixup'] if self.augment and not self.rect else 0.0
-            transforms = v8_transforms(self, self.img_size, hyp)
+            transforms = v9_transforms(self, self.img_size, hyp)
         else:
             transforms = Compose([LetterBox(new_shape=(self.img_size, self.img_size), scaleup=False)])
 
