@@ -51,7 +51,7 @@ def process_mask(protos, masks_in, bboxes, shape, upsample=False):
     return: h, w, n
     """
 
-    c, mh, mw = protos.shape  # CHW
+    c, mh, mw = np.array(protos).shape  # CHW
     ih, iw = shape
     masks = (masks_in @ protos.float().view(c, -1)).sigmoid().view(-1, mh, mw)  # CHW
 
