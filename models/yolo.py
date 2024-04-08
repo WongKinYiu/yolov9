@@ -439,6 +439,58 @@ class Segment(Detect):
         return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
 
 
+class DSegment(DDetect):
+    # YOLO Segment head for segmentation models
+    def __init__(self, nc=80, nm=32, npr=256, ch=(), inplace=True):
+        super().__init__(nc, ch[:-1], inplace)
+        self.nl = len(ch)-1
+        self.nm = nm  # number of masks
+        self.npr = npr  # number of protos
+        self.proto = Conv(ch[-1], self.nm, 1)  # protos
+        self.detect = DDetect.forward
+
+        c4 = max(ch[0] // 4, self.nm)
+        self.cv4 = nn.ModuleList(nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3), nn.Conv2d(c4, self.nm, 1)) for x in ch[:-1])
+
+    def forward(self, x):
+        p = self.proto(x[-1])
+        bs = p.shape[0]
+
+        mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
+        x = self.detect(self, x[:-1])
+        if self.training:
+            return x, mc, p
+        return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
+
+
+class DualDSegment(DualDDetect):
+    # YOLO Segment head for segmentation models
+    def __init__(self, nc=80, nm=32, npr=256, ch=(), inplace=True):
+        super().__init__(nc, ch[:-2], inplace)
+        self.nl = (len(ch)-2) // 2
+        self.nm = nm  # number of masks
+        self.npr = npr  # number of protos
+        self.proto = Conv(ch[-2], self.nm, 1)  # protos
+        self.proto2 = Conv(ch[-1], self.nm, 1)  # protos
+        self.detect = DualDDetect.forward
+
+        c6 = max(ch[0] // 4, self.nm)
+        c7 = max(ch[self.nl] // 4, self.nm)
+        self.cv6 = nn.ModuleList(nn.Sequential(Conv(x, c6, 3), Conv(c6, c6, 3), nn.Conv2d(c6, self.nm, 1)) for x in ch[:self.nl])
+        self.cv7 = nn.ModuleList(nn.Sequential(Conv(x, c7, 3), Conv(c7, c7, 3), nn.Conv2d(c7, self.nm, 1)) for x in ch[self.nl:self.nl*2])
+
+    def forward(self, x):
+        p = [self.proto(x[-2]), self.proto2(x[-1])]
+        bs = p[0].shape[0]
+
+        mc = [torch.cat([self.cv6[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2),
+              torch.cat([self.cv7[i](x[self.nl+i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)]  # mask coefficients
+        d = self.detect(self, x[:-2])
+        if self.training:
+            return d, mc, p
+        return (torch.cat([d[0][1], mc[1]], 1), (d[1][1], mc[1], p[1]))
+
+
 class Panoptic(Detect):
     # YOLO Panoptic head for panoptic segmentation models
     def __init__(self, nc=80, sem_nc=93, nm=32, npr=256, ch=(), inplace=True):
@@ -517,7 +569,7 @@ class BaseModel(nn.Module):
         # Apply to(), cpu(), cuda(), half() to model tensors that are not parameters or registered buffers
         self = super()._apply(fn)
         m = self.model[-1]  # Detect()
-        if isinstance(m, (Detect, DualDetect, TripleDetect, DDetect, DualDDetect, TripleDDetect, Segment, Panoptic)):
+        if isinstance(m, (Detect, DualDetect, TripleDetect, DDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic)):
             m.stride = fn(m.stride)
             m.anchors = fn(m.anchors)
             m.strides = fn(m.strides)
@@ -551,20 +603,19 @@ class DetectionModel(BaseModel):
 
         # Build strides, anchors
         m = self.model[-1]  # Detect()
-        if isinstance(m, (Detect, DDetect, Segment, Panoptic)):
+        if isinstance(m, (Detect, DDetect, Segment, DSegment, Panoptic)):
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Panoptic)) else self.forward(x)
+            forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, DSegment, Panoptic)) else self.forward(x)
             m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s))])  # forward
             # check_anchor_order(m)
             # m.anchors /= m.stride.view(-1, 1, 1)
             self.stride = m.stride
             m.bias_init()  # only run once
-        if isinstance(m, (DualDetect, TripleDetect, DualDDetect, TripleDDetect)):
+        if isinstance(m, (DualDetect, TripleDetect, DualDDetect, TripleDDetect, DualDSegment)):
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            #forward = lambda x: self.forward(x)[0][0] if isinstance(m, (DualSegment, DualPanoptic)) else self.forward(x)[0]
-            forward = lambda x: self.forward(x)[0]
+            forward = lambda x: self.forward(x)[0][0] if isinstance(m, (DualDSegment)) else self.forward(x)[0]
             m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s))])  # forward
             # check_anchor_order(m)
             # m.anchors /= m.stride.view(-1, 1, 1)
@@ -705,11 +756,11 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is CBFuse:
             c2 = ch[f[-1]]
         # TODO: channel, gw, gd
-        elif m in {Detect, DualDetect, TripleDetect, DDetect, DualDDetect, TripleDDetect, Segment, Panoptic}:
+        elif m in {Detect, DualDetect, TripleDetect, DDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
             args.append([ch[x] for x in f])
             # if isinstance(args[1], int):  # number of anchors
             #     args[1] = [list(range(args[1] * 2))] * len(f)
-            if m in {Segment, Panoptic}:
+            if m in {Segment, DSegment, DualDSegment, Panoptic}:
                 args[2] = make_divisible(args[2] * gw, 8)
         elif m is Contract:
             c2 = ch[f] * args[0] ** 2
