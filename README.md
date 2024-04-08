@@ -40,7 +40,7 @@ ONNX export: https://github.com/WongKinYiu/yolov9/issues/2#issuecomment-19605195
 
 TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143#issuecomment-1975049660 https://github.com/WongKinYiu/yolov9/issues/34#issue-2150393690 https://github.com/WongKinYiu/yolov9/issues/79#issue-2153547004 https://github.com/WongKinYiu/yolov9/issues/143#issue-2164002309
 
-QAT TensirRT: https://github.com/WongKinYiu/yolov9/issues/253#issue-2189520073
+QAT TensorRT: https://github.com/WongKinYiu/yolov9/issues/327#issue-2229284136 https://github.com/WongKinYiu/yolov9/issues/253#issue-2189520073
 
 OpenVINO: https://github.com/WongKinYiu/yolov9/issues/164#issue-2168540003
 
@@ -63,6 +63,8 @@ YOLOv9 ROS TensorRT: https://github.com/WongKinYiu/yolov9/issues/145#issue-21642
 YOLOv9 Julia: https://github.com/WongKinYiu/yolov9/issues/141#issuecomment-1973710107
 
 YOLOv9 MLX: https://github.com/WongKinYiu/yolov9/issues/258#issue-2190586540
+
+YOLOv9 StrongSORT with OSNet: https://github.com/WongKinYiu/yolov9/issues/299#issue-2212093340
 
 YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-2153512879
 
