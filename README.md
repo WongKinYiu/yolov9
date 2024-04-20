@@ -44,6 +44,8 @@ TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143#issuecomment
 
 QAT TensorRT: https://github.com/WongKinYiu/yolov9/issues/327#issue-2229284136 https://github.com/WongKinYiu/yolov9/issues/253#issue-2189520073
 
+TFLite: https://github.com/WongKinYiu/yolov9/issues/374#issuecomment-2065751706
+
 OpenVINO: https://github.com/WongKinYiu/yolov9/issues/164#issue-2168540003
 
 C# ONNX inference: https://github.com/WongKinYiu/yolov9/issues/95#issue-2155974619
