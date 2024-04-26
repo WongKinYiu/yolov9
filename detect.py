@@ -171,13 +171,14 @@ def run(
             im0 = annotator.result()
 
             # Show FPS
-            x,y,w,h = 10, 10, 455, 95
-            # Draw black background
-            cv2.rectangle(im0, (x,y), (x+w, y+h), (0,0,0), -1)
+            if dataset.mode != 'image':
+                x,y,w,h = 10, 10, 455, 95
+                # Draw black background
+                cv2.rectangle(im0, (x,y), (x+w, y+h), (0,0,0), -1)
 
-            # Text FPS
-            cv2.putText(im0, "FPS: "+ str(fps), (20, 52), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
-            cv2.putText(im0, "AVG FPS: "+ str(avg_fps), (20, 100), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
+                # Text FPS
+                cv2.putText(im0, "FPS: "+ str(fps), (20, 52), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
+                cv2.putText(im0, "AVG FPS: "+ str(avg_fps), (20, 100), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
 
             if view_img:
                 if platform.system() == 'Linux' and p not in windows:
