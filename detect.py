@@ -18,6 +18,7 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
+import time
 
 
 @smart_inference_mode()
@@ -84,7 +85,16 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+
+    # FPS
+    frame_count = 0
+    total_fps = 0
+    avg_fps = 0
+
     for path, im, im0s, vid_cap, s in dataset:
+
+        start_time = time.time()
+
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -144,8 +154,31 @@ def run(
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
+            # FPS
+            frame_count += 1
+            end_time = time.time()
+
+            fps = 1 / (end_time - start_time)
+
+            total_fps = total_fps + fps
+            avg_fps = total_fps / frame_count
+
+            fps = float("{:.2f}".format(fps))            
+            avg_fps = float("{:.2f}".format(avg_fps))
+            # End FPS
+
             # Stream results
             im0 = annotator.result()
+
+            # Show FPS
+            x,y,w,h = 10, 10, 455, 95
+            # Draw black background
+            cv2.rectangle(im0, (x,y), (x+w, y+h), (0,0,0), -1)
+
+            # Text FPS
+            cv2.putText(im0, "FPS: "+ str(fps), (20, 52), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
+            cv2.putText(im0, "AVG FPS: "+ str(avg_fps), (20, 100), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
+
             if view_img:
                 if platform.system() == 'Linux' and p not in windows:
                     windows.append(p)
