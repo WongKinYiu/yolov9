@@ -55,6 +55,41 @@ def main(_argv):
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(len(class_names), 3)) 
 
+    # Helper Variable
+    entered_vehicle_ids = []
+    exited_vehicle_ids = []    
+
+    vehicle_class_ids = [1, 2, 3, 5, 7]
+
+    vehicle_entry_count = {
+        1: 0,  # bicycle
+        2: 0,  # car
+        3: 0,  # motorcycle
+        5: 0,  # bus
+        7: 0   # truck
+    }
+    vehicle_exit_count = {
+        1: 0,  # bicycle
+        2: 0,  # car
+        3: 0,  # motorcycle
+        5: 0,  # bus
+        7: 0   # truck
+    }
+
+    offset = 20
+    entry_line = {
+        'x1' : 160, 
+        'y1' : 558,  
+        'x2' : 708,  
+        'y2' : 558,          
+    }
+    exit_line = {
+        'x1' : 1155, 
+        'y1' : 558,  
+        'x2' : 1718,  
+        'y2' : 558,          
+    }
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -63,7 +98,10 @@ def main(_argv):
         start_time = time.time()
 
         # Run model on each frame
-        results = model(frame)        
+        results = model(frame)      
+
+        # Line
+        cv2.line(frame, (entry_line['x1'], entry_line['y1']), (exit_line['x2'], exit_line['y2']), (0, 127, 255), 3)          
 
         detect = []
         for det in results.pred[0]:
