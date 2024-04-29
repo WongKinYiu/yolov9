@@ -22,6 +22,27 @@ def show_fps(frame, fps):
     # Text FPS
     cv2.putText(frame, "FPS: " + str(fps), (20,52), cv2.FONT_HERSHEY_PLAIN, 3.5, (0,255,0), 3)
 
+def show_counter(frame, title, class_names, vehicle_count, x_init):
+    overlay = frame.copy()
+
+    # Show Counters
+    y_init = 100
+    gap = 30
+
+    alpha = 0.5
+
+    cv2.rectangle(overlay, (x_init - 5, y_init - 35), (x_init + 200, 265), (0, 255, 0), -1)
+    cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+    
+    cv2.putText(frame, title, (x_init, y_init - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+    for vehicle_id, count in vehicle_count.items():
+        y_init += gap
+
+        vehicle_name = class_names[vehicle_id]
+        vehicle_count = "%.3i" % (count)
+        cv2.putText(frame, vehicle_name, (x_init, y_init), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)            
+        cv2.putText(frame, vehicle_count, (x_init + 135, y_init), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+
 def main(_argv):
     # Initialize the video capture
     video_input = FLAGS.video
@@ -134,7 +155,23 @@ def main(_argv):
             cv2.putText(frame, text, (x1 + 5, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
             
             center_x = int((x1 + x2) / 2 )
-            center_y = int((y1 + y2) / 2 )                      
+            center_y = int((y1 + y2) / 2 )    
+
+            # Counter Enter
+            if((center_x in range(entry_line['x1'], entry_line['x2'])) and (center_y in range(entry_line['y1'], entry_line['y1'] + offset)) ):            
+                if(int(track_id) not in entered_vehicle_ids and class_id in vehicle_class_ids):                    
+                    vehicle_entry_count[class_id] += 1
+                    entered_vehicle_ids.append(int(track_id))                
+
+            # Counter Exit
+            if((center_x in range(exit_line['x1'], exit_line['x2'])) and (center_y in range(exit_line['y1'] - offset, exit_line['y1'])) ):                        
+                if(int(track_id) not in exited_vehicle_ids and class_id in vehicle_class_ids):                    
+                    vehicle_exit_count[class_id] += 1                  
+                    exited_vehicle_ids.append(int(track_id)) 
+
+        # Show Counters
+        show_counter(frame, "Vehicle Enter", class_names, vehicle_entry_count, 10)
+        show_counter(frame, "Vehicle Exit", class_names, vehicle_exit_count, 1710)                 
         
         end_time = time.time()
 
