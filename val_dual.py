@@ -160,7 +160,7 @@ def run(
                                        pad=pad,
                                        rect=rect,
                                        workers=workers,
-                                       min_items=opt.min_items,
+                                       min_items=min_items,
                                        prefix=colorstr(f'{task}: '))[0]
 
     seen = 0
