@@ -5,15 +5,6 @@ nc: 80
 depth_multiple: 1.0
 width_multiple: 1.0
 anchors: 3
-
-#---------------------------Blocks & Params-----------------------------#
-
-# Silence()
-# Conv(ch_out,k,s)
-# ADown(ch_out)
-# RepNCSPELAN4(ch_out,ch_in,partition,n)
-# SPPELAN (ch_out,ch_in)
-
 #---------------------------------Backbone------------------------------#
 backbone:
   [ 
