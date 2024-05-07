@@ -1,0 +1,3 @@
+rtsp://admin:Vinaai!123@py1ai.cameraddns.net:5543/cam/realmonitor?channel=1&subtype=0&unicast=true
+rtsp://admin:Vinaai!123@py2ai.cameraddns.net:5545/cam/realmonitor?channel=1&subtype=0&unicast=true
+rtsp://admin:Vinaai!123@py2ai.cameraddns.net:5544/cam/realmonitor?channel=1&subtype=0&unicast=true

@@ -10,7 +10,7 @@ from copy import copy
 from pathlib import Path
 from urllib.parse import urlparse
 
-from typing import Optional
+from typing import Optional, List
 
 import cv2
 import numpy as np
@@ -559,7 +559,28 @@ class Silence(nn.Module):
 
 
 ##### GELAN #####        
-        
+
+# class SPPELAN(nn.Module):
+#     # spp-elan
+#     def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
+#         super().__init__()
+#         self.c = c3
+#         self.cv1 = Conv(c1, c3, 1, 1)
+#         self.cv2 = SP(5)
+#         self.cv3 = SP(5)
+#         self.cv4 = SP(5)
+#         self.cv5 = Conv(4*c3, c2, 1, 1)
+
+#     def forward(self, x):
+#         y = [self.cv1(x)]
+#         # y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
+#         cv2_y = self.cv2(y[-1])
+#         cv3_y = self.cv3(y[-1])
+#         cv4_y = self.cv4(y[-1])
+#         y.extend([cv2_y, cv3_y, cv4_y])
+#         print(len(y))
+#         return self.cv5(torch.cat(y, 1))
+
 class SPPELAN(nn.Module):
     # spp-elan
     def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -575,7 +596,43 @@ class SPPELAN(nn.Module):
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
-        
+
+# class RepNCSPELAN4(nn.Module):
+#     # csp-elan
+#     def __init__(self, c1, c2, c3, c4, c5=1):  # ch_in, ch_out, number, shortcut, groups, expansion
+#         super().__init__()
+#         self.c = c3//2
+#         self.cv1 = Conv(c1, c3, 1, 1)
+#         self.cv2 = nn.ModuleList([RepNCSP(c3//2, c4, c5), Conv(c4, c4, 3, 1)])
+#         self.cv3 = nn.ModuleList([RepNCSP(c4, c4, c5), Conv(c4, c4, 3, 1)])
+#         self.cv4 = Conv(c3+(2*c4), c2, 1, 1)
+
+#     def forward(self, x):
+#         y = list(self.cv1(x).chunk(2, 1))
+#         cv2_y = y[-1]
+#         cv3_y = y[-1]
+#         for module in self.cv2:
+#           cv2_y = module(cv2_y)
+
+#         for module in self.cv3:
+#           cv3_y = module(cv3_y)
+
+#         y.extend([cv2_y, cv3_y])
+#         return self.cv4(torch.cat(y, 1))
+
+#     def forward_split(self, x):
+#         y = list(self.cv1(x).split((self.c, self.c), 1))
+#         cv2_y = y[-1]
+#         cv3_y = y[-1]
+#         for module in self.cv2:
+#           cv2_y = module(cv2_y)
+
+#         for module in self.cv3:
+#           cv3_y = module(cv3_y)
+
+#         y.extend([cv2_y, cv3_y])
+
+#         return self.cv4(torch.cat(y, 1))
         
 class RepNCSPELAN4(nn.Module):
     # csp-elan
