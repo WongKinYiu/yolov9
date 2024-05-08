@@ -26,7 +26,8 @@ def run(
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
-        conf_thres=0.25,  # confidence threshold
+        low_conf_thres=0.1,  # low confidence threshold
+        high_conf_thres=0.25,  # high confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -62,6 +63,9 @@ def run(
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
+    # Low confidence save dir
+    low_conf_save_dir = increment_path(Path(project) / ('low_conf_' + name), exist_ok=exist_ok)  # increment run
+    low_conf_save_dir.mkdir(parents=True, exist_ok=True)  # make dir
 
     # Load model
     device = select_device(device)
@@ -99,7 +103,7 @@ def run(
 
         # NMS
         with dt[2]:
-            pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
+            pred = non_max_suppression(pred, low_conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)
 
         # Second-stage classifier (optional)
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
@@ -115,22 +119,41 @@ def run(
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
+            low_conf_save_path = str(low_conf_save_dir / p.name)  # path to save abnormal detections
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            low_conf_im0 = im0.copy()  # for low_conf detections
+            high_conf_annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            low_conf_annotator = Annotator(low_conf_im0, line_width=line_thickness, example=str(names))
             if len(det):
+                # print('det:', det)
+                # print('det shape: ', det.shape)
+                
+
+                # print('high_conf_det:', high_conf_det)
+                # print('low_conf_det:', low_conf_det)
+                # print('high_conf_det shape: ', high_conf_det.shape)
+                # print('low_conf_det shape: ', low_conf_det.shape)
+
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
 
+                high_conf_det = det[:, 4] > high_conf_thres # filter out det with conf > high_thres
+                low_conf_det = (det[:, 4] <= high_conf_thres) & (det[:, 4] > low_conf_thres) # filter out det with conf <= high_thres and > conf_thres
+                
+                high_conf_det = det[high_conf_det]
+                low_conf_det = det[low_conf_det]
+# lọc ra những det có conf lớn hơn conf_thres để xử lý như bình thường, những det có conf nhỏ hơn conf_thres
+# nhưng lớn hơn abnormal_conf_thres sẽ được đánh dấu là abnormal và lưu ảnh vào thư mục abnormal
                 # Print results
-                for c in det[:, 5].unique():
-                    n = (det[:, 5] == c).sum()  # detections per class
+                for c in high_conf_det[:, 5].unique():
+                    n = (high_conf_det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
                 # Write results
-                for *xyxy, conf, cls in reversed(det):
+                for *xyxy, conf, cls in reversed(high_conf_det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
@@ -140,12 +163,18 @@ def run(
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        high_conf_annotator.box_label(xyxy, label, color=colors(c, True))
                     if save_crop:
                         save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
+                # Save abnormal detections
+                if save_img and len(low_conf_det):
+                    for *xyxy, conf, cls in reversed(low_conf_det):
+                        c = int(cls)
+                        label = f'{names[c]} {conf:.2f}'
+                        low_conf_annotator.box_label(xyxy, label, color=colors(c, True))
             # Stream results
-            im0 = annotator.result()
+            im0 = high_conf_annotator.result()
             if view_img:
                 if platform.system() == 'Linux' and p not in windows:
                     windows.append(p)
@@ -173,8 +202,12 @@ def run(
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
+                if len(low_conf_det):
+                    low_conf_im0 = low_conf_annotator.result()
+                    cv2.imwrite(low_conf_save_path, low_conf_im0)
+
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'' if len(high_conf_det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -192,7 +225,10 @@ def parse_opt():
     parser.add_argument('--source', type=str, default=ROOT / 'data/images', help='file/dir/URL/glob/screen/0(webcam)')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
-    parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
+    parser.add_argument('--low-conf-thres', type=float, default=0.1, help='low confidence threshold, consider as abnormal \
+                         detection if low_conf_thres < conf <= high_conf_thres')
+    parser.add_argument('--high-conf-thres', type=float, default=0.25, help='high confidence threshold, consider as normal \
+                        detection if conf > high_conf_thres')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=1000, help='maximum detections per image')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
