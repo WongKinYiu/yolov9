@@ -173,6 +173,10 @@ def run(
                         c = int(cls)
                         label = f'{names[c]} {conf:.2f}'
                         low_conf_annotator.box_label(xyxy, label, color=colors(c, True))
+                    
+                    # save abnormal detections
+                    low_conf_im0 = low_conf_annotator.result()
+                    cv2.imwrite(low_conf_save_path, low_conf_im0)
             # Stream results
             im0 = high_conf_annotator.result()
             if view_img:
@@ -202,12 +206,8 @@ def run(
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
-                if len(low_conf_det):
-                    low_conf_im0 = low_conf_annotator.result()
-                    cv2.imwrite(low_conf_save_path, low_conf_im0)
-
         # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(high_conf_det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
+        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
