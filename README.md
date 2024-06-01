@@ -10,8 +10,8 @@ Implementation of YOLOv9
 | [**YOLOv9-C**]() | FPN | 9 | **52.6%** | **25.3M** | **102.1G** |
 | [**YOLOv9-C**]() | ICN | 11 | **52.9%** | **25.3M** | **102.1G** |
 | [**YOLOv9-C**]() | LHG-ICN | 10 | **53.0%** | **25.3M** | **102.1G** |
-| [**YOLOv9-C**]() | C2F-LHG-ICN (coarse) | -- | **52.7%** (temp) | **25.3M** | **102.1G** |
-| [**YOLOv9-C**]() | C2F-LHG-ICN (fine) | -- | **52.4%** (temp) | **25.3M** | **102.1G** |
+| [**YOLOv9-C**]() | C2F-LHG-ICN (coarse branch) | -- | **52.7%** (temp) | **25.3M** | **102.1G** |
+| [**YOLOv9-C**]() | C2F-LHG-ICN (fine branch) | -- | **52.4%** (temp) | **25.3M** | **102.1G** |
 
 * LHG indicates lead head guide assignment proposed by YOLOv7, which use lead branch to make consistant label assignment for auxiliary branch.
 * C2F indicates coarse to fine assignment proposed by YOLOv7, which enable fine branch could be NMS-free.
@@ -29,13 +29,13 @@ Implementation of YOLOv9
 | [**Light Head YOLOv9-C**]() |  **52.8%** (temp) | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite**]() |  **52.6%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
-| [**Anchor-free YOLOv9-C (fine)**]() |  **52.4%** (temp) | **25.3M** | **102.1G** |
-| [**Segmentation-guided YOLOv9-C (fine)**]() |  -- | **25.3M** | **102.1G** |
-| [**Light Head YOLOv9-C (fine)**]() |  **52.5%** (temp) | **21.1M** | **82.5G** |
-| [**YOLOv9-C Lite (fine)**]() |  **52.3%** (temp) | **13.3M** | **66.7G** |
+| [**Anchor-free YOLOv9-C (fine branch)**]() |  **52.4%** (temp) | **25.3M** | **102.1G** |
+| [**Segmentation-guided YOLOv9-C (fine branch)**]() |  -- | **25.3M** | **102.1G** |
+| [**Light Head YOLOv9-C (fine branch)**]() |  **52.5%** (temp) | **21.1M** | **82.5G** |
+| [**YOLOv9-C Lite (fine branch)**]() |  **52.3%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
 <!-- | [**YOLOv9-C TR**]() |  **%** (temp) | **M** | **G** | -->
-<!-- | [**YOLOv9-C TR (fine)**]() |  **%** (temp) | **M** | **G** | -->
+<!-- | [**YOLOv9-C TR (fine branch)**]() |  **%** (temp) | **M** | **G** | -->
 
 * Anchor-based YOLOv9 replace YOLOv9 head by YOLOv7 head.
 * Anchor-free YOLOv9 is YOLOv9.
