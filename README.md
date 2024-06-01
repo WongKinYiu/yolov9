@@ -27,12 +27,12 @@ Implementation of YOLOv9
 | [**Anchor-free YOLOv9-C**]() |  **53.0%** | **25.3M** | **102.1G** |
 | [**Segmentation-guided YOLOv9-C**]() |  **53.3%** | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C**]() |  **52.8%** (temp) | **21.1M** | **82.5G** |
-| [**YOLOv9-C Lite**]() |  **52.6%** (temp) | **13.3M** | **66.7G** |
+| [**YOLOv9-C Lite**]() |  **52.7%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
 | [**Anchor-free YOLOv9-C (fine branch)**]() |  **52.4%** (temp) | **25.3M** | **102.1G** |
 | [**Segmentation-guided YOLOv9-C (fine branch)**]() |  -- | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C (fine branch)**]() |  **52.5%** (temp) | **21.1M** | **82.5G** |
-| [**YOLOv9-C Lite (fine branch)**]() |  **52.3%** (temp) | **13.3M** | **66.7G** |
+| [**YOLOv9-C Lite (fine branch)**]() |  **52.4%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
 <!-- | [**YOLOv9-C TR**]() |  **%** (temp) | **M** | **G** | -->
 <!-- | [**YOLOv9-C TR (fine branch)**]() |  **%** (temp) | **M** | **G** | -->
