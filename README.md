@@ -15,6 +15,7 @@ Implementation of YOLOv9
 
 * LHG indicates lead head guide assignment proposed by YOLOv7, which use lead branch to make consistant label assignment for auxiliary branch.
 * C2F indicates coarse to fine assignment proposed by YOLOv7, which enable fine branch could be NMS-free.
+* Training time are estimated on RTX 6000 ada with batch size 128.
 * (temp) indicates not yet finish training.
 
 ## Versatility of PGI on various architectures
