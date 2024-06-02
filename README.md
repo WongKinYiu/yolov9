@@ -44,6 +44,8 @@ TensorRT inference: https://github.com/WongKinYiu/yolov9/issues/143#issuecomment
 
 QAT TensorRT: https://github.com/WongKinYiu/yolov9/issues/327#issue-2229284136 https://github.com/WongKinYiu/yolov9/issues/253#issue-2189520073
 
+TensorRT inference for segmentation: https://github.com/WongKinYiu/yolov9/issues/446
+
 TFLite: https://github.com/WongKinYiu/yolov9/issues/374#issuecomment-2065751706
 
 OpenVINO: https://github.com/WongKinYiu/yolov9/issues/164#issue-2168540003
@@ -75,6 +77,8 @@ YOLOv9 ByteTrack: https://github.com/WongKinYiu/yolov9/issues/78#issue-215351287
 YOLOv9 DeepSORT: https://github.com/WongKinYiu/yolov9/issues/98#issue-2156172319
 
 YOLOv9 counting: https://github.com/WongKinYiu/yolov9/issues/84#issue-2153904804
+
+YOLOv9 speed estimation: https://github.com/WongKinYiu/yolov9/issues/456
 
 YOLOv9 face detection: https://github.com/WongKinYiu/yolov9/issues/121#issue-2160218766
 
