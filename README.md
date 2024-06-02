@@ -25,12 +25,12 @@ Implementation of YOLOv9
 | [**Anchor-based YOLOv9-C**]() |  **50.7%** | **20.2M** | **78.4G** |
 |  |  |  |  |
 | [**Anchor-free YOLOv9-C**]() |  **53.0%** | **25.3M** | **102.1G** |
-| [**Segmentation-guided YOLOv9-C**]() |  **53.3%** | **25.3M** | **102.1G** |
+| [**Mask-guided YOLOv9-C**]() |  **53.3%** | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C**]() |  **52.8%** (temp) | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite**]() |  **52.7%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
 | [**Anchor-free YOLOv9-C (fine branch)**]() |  **52.4%** (temp) | **25.3M** | **102.1G** |
-| [**Segmentation-guided YOLOv9-C (fine branch)**]() |  -- | **25.3M** | **102.1G** |
+| [**Mask-guided YOLOv9-C (fine branch)**]() |  -- | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C (fine branch)**]() |  **52.5%** (temp) | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite (fine branch)**]() |  **52.4%** (temp) | **13.3M** | **66.7G** |
 |  |  |  |  |
@@ -39,7 +39,7 @@ Implementation of YOLOv9
 
 * Anchor-based YOLOv9 replace YOLOv9 head by YOLOv7 head.
 * Anchor-free YOLOv9 is YOLOv9.
-* Segmentation-guided YOLOv9 use instance segmentation task to guide YOLOv9 training.
+* Mask-guided YOLOv9 use instance segmentation task to guide YOLOv9 training.
 * Light Head YOLOv9 replace 3x3 convolution in YOLOv9 head by 3x3 depth-wise separable convolution.
 * YOLOv9 Lite is depth-wise convolution-based YOLOv9.
 <!-- * YOLOv9 TR is Transformer-based YOLOv9. -->
