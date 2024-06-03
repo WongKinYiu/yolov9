@@ -413,7 +413,7 @@ class SPP(nn.Module):
             warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
             return self.cv2(torch.cat([x] + [m(x) for m in self.m], 1))
 
-        
+
 class ASPP(torch.nn.Module):
 
     def __init__(self, in_channels, out_channels):
@@ -493,8 +493,8 @@ class SPPF(nn.Module):
 
 import torch.nn.functional as F
 from torch.nn.modules.utils import _pair
-    
-    
+
+
 class ReOrg(nn.Module):
     # yolo
     def __init__(self):
@@ -549,8 +549,8 @@ class Shortcut(nn.Module):
 
     def forward(self, x):
         return x[0]+x[1]
-    
-    
+
+
 class Silence(nn.Module):
     def __init__(self):
         super(Silence, self).__init__()
@@ -558,8 +558,8 @@ class Silence(nn.Module):
         return x
 
 
-##### GELAN #####        
-        
+# #### GELAN #####        
+
 class SPPELAN(nn.Module):
     # spp-elan
     def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -575,8 +575,8 @@ class SPPELAN(nn.Module):
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
-        
-        
+
+
 class RepNCSPELAN4(nn.Module):
     # csp-elan
     def __init__(self, c1, c2, c3, c4, c5=1):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -597,10 +597,10 @@ class RepNCSPELAN4(nn.Module):
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
-#################
+# ################
 
 
-##### YOLOR #####
+# #### YOLOR #####
 
 class ImplicitA(nn.Module):
     def __init__(self, channel):
@@ -623,10 +623,10 @@ class ImplicitM(nn.Module):
     def forward(self, x):
         return self.implicit * x
 
-#################
+# ################
 
 
-##### CBNet #####
+# #### CBNet #####
 
 class CBLinear(nn.Module):
     def __init__(self, c1, c2s, k=1, s=1, p=None, g=1):  # ch_in, ch_outs, kernel, stride, padding, groups
@@ -649,7 +649,7 @@ class CBFuse(nn.Module):
         out = torch.sum(torch.stack(res + xs[-1:]), dim=0)
         return out
 
-#################
+# ################
 
 
 class DetectMultiBackend(nn.Module):
