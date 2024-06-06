@@ -16,7 +16,6 @@ Implementation of YOLOv9
 * LHG indicates lead head guide assignment proposed by YOLOv7, which use lead branch to make consistant label assignment for auxiliary branch.
 * C2F indicates coarse to fine assignment proposed by YOLOv7, which enable fine branch could be NMS-free.
 * Training time are estimated on RTX 6000 ada with batch size 128.
-* (temp) indicates not yet finish training.
 
 ## Versatility of PGI on various architectures
 
@@ -30,7 +29,7 @@ Implementation of YOLOv9
 | [**YOLOv9-C Lite**]() | **52.7%** (temp) | -- | **13.3M** | **66.7G** |
 |  |  |  |  |
 | [**Anchor-free YOLOv9-C (fine branch)**]() | **52.4%** | 52.3% | **25.3M** | **102.1G** |
-| [**Mask-guided YOLOv9-C (fine branch)**]() | -- | -- | **25.3M** | **102.1G** |
+| [**Mask-guided YOLOv9-C (fine branch)**]() | **52.7%** (temp) | -- | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C (fine branch)**]() | **52.7%** | 52.1% | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite (fine branch)**]() | **52.4%** (temp) | -- | **13.3M** | **66.7G** |
 |  |  |  |  |
@@ -42,6 +41,7 @@ Implementation of YOLOv9
 * Mask-guided YOLOv9 use instance segmentation task to guide YOLOv9 training.
 * Light Head YOLOv9 replace 3x3 convolution in YOLOv9 head by 3x3 depth-wise separable convolution.
 * YOLOv9 Lite is depth-wise convolution-based YOLOv9.
+* (temp) indicates not yet finish training.
 <!-- * YOLOv9 TR is Transformer-based YOLOv9. -->
 
 ## Versatility of PGI on small dataset
