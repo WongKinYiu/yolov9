@@ -1,13 +1,16 @@
 import argparse
 import json
 import os
+import pickle
 import sys
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
 from tqdm import tqdm
+import PIL.Image as Image
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLO root directory
@@ -17,11 +20,12 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from torchvision.utils import draw_segmentation_masks
 from pycocotools import mask as maskUtils
 from models.common import DetectMultiBackend
 from models.yolo import SegmentationModel
 from utils.callbacks import Callbacks
-from utils.coco_utils import getCocoIds, getMappingId, getMappingIndex
+from utils.coco_utils import getCocoIds, getMappingId, getMappingIndex, idToPanopticId, annToMask
 from utils.general import (LOGGER, NUM_THREADS, TQDM_BAR_FORMAT, Profile, check_dataset, check_img_size,
                            check_requirements, check_yaml, coco80_to_coco91_class, colorstr, increment_path,
                            non_max_suppression, print_args, scale_boxes, xywh2xyxy, xyxy2xywh)
@@ -137,6 +141,9 @@ def run(
         mask_downsample_ratio=1,
         compute_loss=None,
         callbacks=Callbacks(),
+        export_mask = False,
+        color_map = ROOT / 'data/color_map.pickle',  # for semantic/panoptic segmentation
+        pan_conf_thres = 0.25,
 ):
     if save_json:
         check_requirements(['pycocotools'])
@@ -187,7 +194,18 @@ def run(
     niou = iouv.numel()
 
     # Semantic Segmentation
+    mask_output_dir = (save_dir / 'semantic_masks')
+    mask_output_dir.mkdir(parents = True, exist_ok = True)  # make dir
+
     img_id_list = []
+
+    # Panoptic Segmentation
+    panoptic_output_dir = (save_dir / 'panoptic_masks')
+    panoptic_output_dir.mkdir(parents = True, exist_ok = True)  # make dir
+
+    # Color Map
+    with open(color_map, 'rb') as f:
+        color_map = pickle.load(f)
 
     # Dataloader
     if not training:
@@ -216,14 +234,17 @@ def run(
     if isinstance(names, (list, tuple)):  # old format
         names = dict(enumerate(names))
     class_map = coco80_to_coco91_class() if is_coco else list(range(1000))
-    s = ('%22s' + '%11s' * 12) % ('Class', 'Images', 'Instances', 'Box(P', "R", "mAP50", "mAP50-95)", "Mask(P", "R",
-                                  "mAP50", "mAP50-95)", 'S(MIoU', 'FWIoU)')
+    s = ('%22s' + '%11s' * 11) % ('Class', 'Images', 'Instances', 'Box(P', "R", "mAP50", "mAP50-95)", "Mask(P", "R",
+                                  "mAP50", "mAP50-95)", 'S(MIoU)')
     dt = Profile(), Profile(), Profile()
     metrics = Metrics()
-    semantic_metrics = Semantic_Metrics(nc = (nc + stuff_nc), device = device)
+    semantic_metrics = Semantic_Metrics(classes = list(names.values()) + stuff_names, ignore_indices = [0, 172])
     loss = torch.zeros(6, device=device)
     jdict, stats = [], []
-    semantic_jdict = []
+    semantic_jdict, stuff_jdict = [], []
+    panoptic_jdict = {
+        'annotations': [],
+    }
     # callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
     for batch_i, (im, targets, paths, shapes, masks, semasks) in enumerate(pbar):
@@ -356,62 +377,234 @@ def run(
 
             psemask = torch.squeeze(psemask)
 
-            nc, h, w = psemask.shape
+            ch, h, w = psemask.shape
 
             semantic_mask = torch.flatten(psemask, start_dim = 1).permute(1, 0) # class x h x w -> (h x w) x class
 
             max_idx = semantic_mask.argmax(1)
             output_masks = torch.zeros(semantic_mask.shape).scatter(1, max_idx.cpu().unsqueeze(1), 1.0) # one hot: (h x w) x class
-            output_masks = torch.reshape(output_masks.permute(1, 0), (nc, h, w)) # (h x w) x class -> class x h x w
+            output_masks = torch.reshape(output_masks.permute(1, 0), (ch, h, w)) # (h x w) x class -> class x h x w
             psemask = output_masks.to(device = device)
 
-            # TODO: check is_coco
-            instances_ids = getCocoIds(name = 'instances')
-            stuff_mask = torch.zeros((h, w), device = device)
-            check_semantic_mask = False
-            for idx, pred_semantic_mask in enumerate(psemask):
-                category_id = int(getMappingId(idx))
-                if 183 == category_id:
-                    # set all non-stuff pixels to other
-                    pred_semantic_mask = (torch.logical_xor(stuff_mask, torch.ones((h, w), device = device))).int()
+            if save_json:
+                instances_ids = getCocoIds(name = 'instances')
+                stuff_mask = torch.zeros((h, w), device = device)
+                check_semantic_mask = False
+                for idx, pred_semantic_mask in enumerate(psemask):
+                    category_id = int(getMappingId(idx))
+                    # Semantic part
+                    if (0 < torch.max(pred_semantic_mask)) and (0 < category_id) and (183 != category_id):
+                        rle = maskUtils.encode(np.asfortranarray(pred_semantic_mask.cpu(), dtype = np.uint8))
+                        rle['counts'] = rle['counts'].decode('utf-8')
 
-                # ignore the classes which all zeros / unlabeled class
-                if (0 >= torch.max(pred_semantic_mask)) or (0 >= category_id):
-                    continue
+                        temp_d = {
+                            'image_id': int(image_id) if image_id.isnumeric() else image_id,
+                            'category_id': category_id,
+                            'segmentation': rle,
+                            'score': 1
+                        }
 
-                if category_id not in instances_ids:
-                    # record all stuff mask
-                    stuff_mask = torch.logical_or(stuff_mask, pred_semantic_mask)
+                        semantic_jdict.append(temp_d)
 
-                if (category_id not in instances_ids):
-                    rle = maskUtils.encode(np.asfortranarray(pred_semantic_mask.cpu(), dtype = np.uint8))
+                    # Stuff part
+                    if 183 == category_id:
+                        # set all non-stuff pixels to other
+                        pred_semantic_mask = (torch.logical_xor(stuff_mask, torch.ones((h, w), device = device))).int()
+
+                    # ignore the classes which all zeros / unlabeled class
+                    if (0 >= torch.max(pred_semantic_mask)) or (0 >= category_id):
+                        continue
+
+                    if category_id not in instances_ids:
+                        # record all stuff mask
+                        stuff_mask = torch.logical_or(stuff_mask, pred_semantic_mask)
+
+                        rle = maskUtils.encode(np.asfortranarray(pred_semantic_mask.cpu(), dtype = np.uint8))
+                        rle['counts'] = rle['counts'].decode('utf-8')
+
+                        temp_d = {
+                            'image_id': int(image_id) if image_id.isnumeric() else image_id,
+                            'category_id': category_id,
+                            'segmentation': rle,
+                            'score': 1
+                        }
+
+                        stuff_jdict.append(temp_d)
+                        check_semantic_mask = True
+
+                if not check_semantic_mask:
+                    # append a other mask for evaluation if the image without any mask
+                    other_mask = (torch.ones((h, w), device = device)).int()
+
+                    rle = maskUtils.encode(np.asfortranarray(other_mask.cpu(), dtype = np.uint8))
                     rle['counts'] = rle['counts'].decode('utf-8')
 
                     temp_d = {
                         'image_id': int(image_id) if image_id.isnumeric() else image_id,
-                        'category_id': category_id,
+                        'category_id': 183,
                         'segmentation': rle,
                         'score': 1
                     }
 
-                    semantic_jdict.append(temp_d)
-                    check_semantic_mask = True
+                    stuff_jdict.append(temp_d)
 
-            if not check_semantic_mask:
-                # append a other mask for evaluation if the image without any mask
-                other_mask = (torch.ones((h, w), device = device)).int()
+                # Panoptic Segmentation
+                instance_num = len(getCocoIds(name = 'instances'))
+                panoptic_ids = getCocoIds(name = 'panoptic')
+                panoptic_num = len(panoptic_ids)
 
-                rle = maskUtils.encode(np.asfortranarray(other_mask.cpu(), dtype = np.uint8))
-                rle['counts'] = rle['counts'].decode('utf-8')
+                panoptic_instance_color_map = []
+                panoptic_stuff_color_map = []
 
-                temp_d = {
+                stuff_masks = (psemask[instance_num : ]).to(device)
+                _, mask_h, mask_w = stuff_masks.shape
+
+                panoptic_mask = torch.zeros((mask_h, mask_w), dtype = torch.bool, device = device)
+                panoptic_mask_categories = []
+                panoptic_anno = {
+                    'segments_info': [],
+                    'file_name': f'{str(image_id).zfill(12)}.png',
                     'image_id': int(image_id) if image_id.isnumeric() else image_id,
-                    'category_id': 183,
-                    'segmentation': rle,
-                    'score': 1
                 }
 
-                semantic_jdict.append(temp_d)
+                if 0 != npr:
+                    instance_cls = predn[:, 5]
+                    instance_masks = torch.from_numpy(pred_masks).detach().clone().permute(2, 0, 1).to(device)
+
+                    # get color map for panoptic instances
+                    shift_colors = {}
+
+                    for idx, instance_idx in enumerate(instance_cls):
+                        if pan_conf_thres > predn[idx][4]:
+                            # only accept the instances whose confidence score larger than threshold
+                            instance_masks = instance_masks[: idx]
+                            break
+
+                        instance_id = getMappingId(int(instance_idx), name = 'instances')
+
+                        instance_color = list(color_map[instance_id])
+                        if instance_id not in shift_colors:
+                            shift_num = 1
+                            shift_colors[instance_id] = 1
+                        else:
+                            shift_num = shift_colors[instance_id]
+                            shift_colors[instance_id] += 1
+
+                            pos_num = shift_num % 2
+                            pos_idx = 0 if ((0 == pos_num) and (0 != (instance_id % 3))) \
+                                else (2 if ((1 == pos_num) and (2 != (instance_id % 3))) else 1)
+                            increase_num = ((shift_num // 2) + 1) * 3
+
+                            instance_color[pos_idx] = (instance_color[pos_idx] + increase_num) % 255
+
+                        panoptic_instance_color_map.append(tuple(instance_color))
+
+                        instance_masks[idx] = instance_masks[idx] - (torch.logical_and(panoptic_mask, instance_masks[idx]).to(dtype = torch.uint8))
+                        panoptic_mask = torch.logical_or(panoptic_mask, instance_masks[idx])
+                        panoptic_mask_categories.append(instance_id)
+
+                # convert stuff masks to panoptic stuff masks and get color map for panoptic stuff
+                panoptic_stuff_num = panoptic_num - instance_num
+                panoptic_stuff_masks = torch.zeros((panoptic_stuff_num, mask_h, mask_w), dtype = torch.bool, device = device)
+
+                for idx, stuff_mask in enumerate(stuff_masks):
+                    stuff_id = getMappingId(idx + instance_num)
+                    panoptic_stuff_id = idToPanopticId(stuff_id)
+                    if 0 == panoptic_stuff_id:
+                        # ignore unlabeled
+                        continue
+
+                    panoptic_stuff_idx = getMappingIndex(panoptic_stuff_id, name = 'panoptic') - instance_num
+                    panoptic_stuff_masks[panoptic_stuff_idx] = torch.logical_or(panoptic_stuff_masks[panoptic_stuff_idx], stuff_mask)
+
+                for idx in range(len(panoptic_stuff_masks)):
+                    panoptic_stuff_masks[idx] = (panoptic_stuff_masks[idx]).to(dtype = torch.uint8) - (torch.logical_and(panoptic_mask, panoptic_stuff_masks[idx]).to(dtype = torch.uint8))
+                    panoptic_mask = torch.logical_or(panoptic_mask, panoptic_stuff_masks[idx])
+                    panoptic_id = getMappingId((idx + instance_num), name = 'panoptic')
+                    panoptic_mask_categories.append(panoptic_id)
+
+                    panoptic_stuff_color_map.append(color_map[panoptic_id])
+
+                # resize mask
+                h0, w0 = shapes[si][0]
+                h_ratio = mask_h / h0
+                w_ratio = mask_w / w0
+
+                output_img_mask = panoptic_stuff_masks.to(dtype = torch.float) if (0 == npr) else \
+                    torch.cat((instance_masks.to(dtype = torch.float), panoptic_stuff_masks.to(dtype = torch.float)), 0)
+
+                if h_ratio == w_ratio:
+                    output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (h0, w0), mode = 'bilinear', align_corners = False)
+                else:
+                    transform = transforms.CenterCrop((h0, w0))
+
+                    if (1 != h_ratio) and (1 != w_ratio):
+                        h_new = h0 if (h_ratio < w_ratio) else int(mask_h / w_ratio)
+                        w_new = w0 if (h_ratio > w_ratio) else int(mask_w / h_ratio)
+                        output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (h_new, w_new), mode = 'bilinear', align_corners = False)
+
+                    output_img_mask = transform(output_img_mask)
+
+                panoptic_mask = np.zeros((h0, w0, 3), dtype = np.uint8)
+                output_img_mask = torch.squeeze(output_img_mask).to(dtype = torch.bool).cpu()
+                panoptic_all_color_map = panoptic_instance_color_map + panoptic_stuff_color_map
+                for idx, (output_mask, color) in enumerate(zip(output_img_mask, panoptic_all_color_map)):
+                    if 0 != torch.sum(output_mask):
+                        panoptic_mask[1 == output_mask] = color
+                        panoptic_anno['segments_info'].append({
+                            'id': int(color[0] + 256 * color[1] + 256 * 256 * color[2]),
+                            'category_id': panoptic_mask_categories[idx],
+                        })
+
+                Image.fromarray(panoptic_mask).save(os.path.join(panoptic_output_dir, f"{image_id}.png"))
+
+                panoptic_jdict['annotations'].append(panoptic_anno)
+
+        # Semantic Segmentation
+        if (not training) and export_mask:
+            _, ic, ih, iw = im.shape
+            semantic_seg_mask = torch.nn.functional.interpolate(psemasks, size = (ih, iw), mode = 'bilinear', align_corners = False)
+            mask_bs, ch, mask_h, mask_w = semantic_seg_mask.shape
+            semantic_mask = torch.flatten(semantic_seg_mask, start_dim = 2).permute(0, 2, 1) # bs x (h x w) x class
+            colors = [color_map[i] for i in getCocoIds()]
+            for b in range(mask_bs):
+                file_name = Path(paths[b]).stem
+                max_idx = semantic_mask[b].argmax(1)
+                output_img_mask = torch.zeros(semantic_mask[b].shape).scatter(1, max_idx.cpu().unsqueeze (1), 1.0) # one hot: (h x w) x class
+                output_img_mask = torch.reshape(output_img_mask.permute(1, 0), (ch, mask_h, mask_w)) # class x h x w
+
+                # resize semantic mask
+                h0, w0 = shapes[b][0]
+                h_ratio = mask_h / h0
+                w_ratio = mask_w / w0
+
+                if h_ratio == w_ratio:
+                    output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (h0, w0), mode = 'bilinear', align_corners = False)
+                else:
+                    transform = transforms.CenterCrop((h0, w0))
+
+                    if (1 != h_ratio) and (1 != w_ratio):
+                        h_new = h0 if (h_ratio < w_ratio) else int(mask_h / w_ratio)
+                        w_new = w0 if (h_ratio > w_ratio) else int(mask_w / h_ratio)
+                        output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (h_new, w_new), mode = 'bilinear', align_corners = False)
+
+                    output_img_mask = transform(output_img_mask)
+
+                output_img = draw_segmentation_masks(
+                    # image = torch.nn.functional.interpolate((img_back[b])[None, :], size = (h_new, w_new), mode = 'bilinear', align_corners = False).to(dtype = torch.uint8).cpu(),
+                    image = torch.zeros((ic, h0, w0)).to(dtype = torch.uint8),
+                    masks = torch.squeeze(output_img_mask).to(dtype = torch.bool).cpu(),
+                    alpha = 1,
+                    colors = colors,
+                )
+
+                done = cv2.imwrite(
+                    os.path.join(mask_output_dir, f"{file_name}_mask.jpg"),
+                    torch.permute(output_img, (1, 2, 0)).numpy()
+                )
+
+                if not done:
+                    print(os.path.join(mask_output_dir, f"{file_name}_mask.jpg"))
 
         # Plot images
         if plots and batch_i < 3:
@@ -433,15 +626,15 @@ def run(
     nt = np.bincount(stats[4].astype(int), minlength=nc)  # number of targets per class
 
     # Print results
-    pf = '%22s' + '%11i' * 2 + '%11.3g' * 10  # print format
-    LOGGER.info(pf % ("all", seen, nt.sum(), *metrics.mean_results(), *semantic_metrics.results()))
+    pf = '%22s' + '%11i' * 2 + '%11.3g' * 9  # print format
+    LOGGER.info(pf % ("all", seen, nt.sum(), *metrics.mean_results(), semantic_metrics.results()))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING ⚠️ no labels found in {task} set, can not compute metrics without labels')
 
     # Print results per class
     if (verbose or (nc < 50 and not training)) and nc > 1 and len(stats):
         for i, c in enumerate(metrics.ap_class_index):
-            LOGGER.info(pf % (names[c], seen, nt[c], *metrics.class_result(i), *semantic_metrics.results()))
+            LOGGER.info(pf % (names[c], seen, nt[c], *metrics.class_result(i), semantic_metrics.results()))
 
     # Print speeds
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
@@ -455,24 +648,41 @@ def run(
     # callbacks.run('on_val_end')
 
     mp_bbox, mr_bbox, map50_bbox, map_bbox, mp_mask, mr_mask, map50_mask, map_mask = metrics.mean_results()
-    miou_sem, fwiou_sem = semantic_metrics.results()
+    miou_sem = semantic_metrics.results()
     semantic_metrics.reset()
 
     # Save JSON
     if save_json and len(jdict):
         w = Path(weights[0] if isinstance(weights, list) else weights).stem if weights is not None else ''  # weights
         anno_path = Path(data.get('path', '../coco'))
+        val_name = Path(data.get('val', 'val2017.txt')).stem.split('.')[0]
+
+        # Object Detection
         anno_json = str(anno_path / 'annotations/instances_val2017.json')  # annotations json
         pred_json = str(save_dir / f"{w}_predictions.json")  # predictions json
         LOGGER.info(f'\nEvaluating pycocotools mAP... saving {pred_json}...')
         with open(pred_json, 'w') as f:
             json.dump(jdict, f)
 
-        semantic_anno_json = str(anno_path / 'annotations/stuff_val2017.json')  # annotations json
-        semantic_pred_json = str(save_dir / f"{w}_predictions_stuff.json")  # predictions json
+        # Semantic Segmentation
+        semantic_pred_json = str(save_dir / f"{w}_predictions_semantic.json")  # predictions json
         LOGGER.info(f'\nsaving {semantic_pred_json}...')
         with open(semantic_pred_json, 'w') as f:
             json.dump(semantic_jdict, f)
+
+        # Stuff Segmentation
+        stuff_anno_json = str(anno_path / f'annotations/stuff_{val_name}.json')  # annotations json
+        stuff_pred_json = str(save_dir / f"{w}_predictions_stuff.json")  # predictions json
+        LOGGER.info(f'\nsaving {stuff_pred_json}...')
+        with open(stuff_pred_json, 'w') as f:
+            json.dump(stuff_jdict, f)
+
+        # Panoptic Segmentation
+        panoptic_anno_json = str(anno_path / f'annotations/panoptic_{val_name}.json')  # annotations json
+        panoptic_pred_json = str(save_dir / f"{w}_predictions_panoptic.json")  # predictions json
+        LOGGER.info(f'\nsaving {panoptic_pred_json}...')
+        with open(panoptic_pred_json, 'w') as f:
+            json.dump(panoptic_jdict, f)
 
         try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
             from pycocotools.coco import COCO
@@ -481,23 +691,82 @@ def run(
             anno = COCO(anno_json)  # init annotations api
             pred = anno.loadRes(pred_json)  # init predictions api
             results = []
-            for eval in COCOeval(anno, pred, 'bbox'), COCOeval(anno, pred, 'segm'):
+            for cocoeval in COCOeval(anno, pred, 'bbox'), COCOeval(anno, pred, 'segm'):
                 if is_coco:
-                    eval.params.imgIds = [int(Path(x).stem) for x in dataloader.dataset.im_files]  # img ID to evaluate
-                eval.evaluate()
-                eval.accumulate()
-                eval.summarize()
-                results.extend(eval.stats[:2])  # update results (mAP@0.5:0.95, mAP@0.5)
+                    cocoeval.params.imgIds = [int(Path(x).stem) for x in dataloader.dataset.im_files]  # img ID to evaluate
+                cocoeval.evaluate()
+                cocoeval.accumulate()
+                cocoeval.summarize()
+                results.extend(cocoeval.stats[:2])  # update results (mAP@0.5:0.95, mAP@0.5)
             map_bbox, map50_bbox, map_mask, map50_mask = results
 
             # Semantic Segmentation
+            LOGGER.info(f'\nEvaluating mmseg semantic segmentation... ')
+
+            classes = list(names.values()) + stuff_names
+            classes = classes[-1: ] + classes[: -1]  # move 'unlabeled' to front
+            semantic_eval = Semantic_Metrics(classes = classes, ignore_indices = [0, 172], print_detail = True)  # ignore classes: 'unlabeled' and 'other'
+
+            # Load json
+            with open(anno_json) as j:
+                gt_instance_anns = json.load(j)
+
+            gt_stuff_coco = COCO(stuff_anno_json)
+            with open(stuff_anno_json) as j:
+                gt_stuff_anns = json.load(j)
+
+            with open(semantic_pred_json) as j:
+                pred_anns = json.load(j)
+
+            img_ids = [pred_ann['image_id'] for pred_ann in pred_anns]
+            img_ids = list(set(img_ids))
+            for img_id in tqdm(img_ids, total = len(img_ids)):
+                img = (gt_stuff_coco.loadImgs(int(img_id)))[0]
+                h, w = (img['height'], img['width'])
+
+                gt_masks = torch.zeros((len(classes), h, w), device = device)
+                for ann in gt_instance_anns['annotations']:
+                    if int(img_id) != int(ann['image_id']):
+                        continue
+
+                    category_id = int(ann['category_id'])
+                    idx = getMappingIndex(category_id) + 1
+                    gt_masks[idx] = torch.logical_or(gt_masks[idx], torch.tensor(annToMask(ann, (h, w)), dtype = torch.bool, device = device).squeeze()).int()
+
+                for ann in gt_stuff_anns['annotations']:
+                    if int(img_id) != int(ann['image_id']):
+                        continue
+
+                    category_id = int(ann['category_id'])
+                    if 183 == int(category_id):
+                        # skip "others" class
+                        continue
+
+                    idx = getMappingIndex(category_id) + 1
+                    gt_masks[idx] = torch.logical_or(gt_masks[idx], torch.tensor(annToMask(ann, (h, w)), dtype = torch.bool, device = device).squeeze()).int()
+
+                pred_masks = torch.zeros((len(classes), h, w), device = device)
+                for pred_ann in pred_anns:
+                    if int(img_id) != int(pred_ann['image_id']):
+                        continue
+
+                    category_id = int(pred_ann['category_id'])
+                    idx = getMappingIndex(category_id) + 1
+                    pred_masks[idx] = torch.logical_or(pred_masks[idx], torch.tensor(annToMask(pred_ann, (h, w)), dtype = torch.bool, device = device).squeeze()).int()
+
+                semantic_eval.update([pred_masks], [gt_masks])
+
+            miou_sem = semantic_eval.results()
+            print('mIoU:', miou_sem)
+
+            # Stuff
             from utils.stuff_seg.cocostuffeval import COCOStuffeval
 
             LOGGER.info(f'\nEvaluating pycocotools stuff... ')
             imgIds = [int(x) for x in img_id_list]
 
-            stuffGt = COCO(semantic_anno_json)  # initialize COCO ground truth api
-            stuffDt = stuffGt.loadRes(semantic_pred_json)  # initialize COCO pred api
+            stuffGt = COCO(stuff_anno_json)  # initialize COCO ground truth api
+            stuffDt = stuffGt.loadRes(stuff_pred_json)  # initialize COCO pred api
 
             cocoStuffEval = COCOStuffeval(stuffGt, stuffDt)
             cocoStuffEval.params.imgIds = imgIds  # image IDs to evaluate
@@ -515,6 +784,18 @@ def run(
                             ' {:<5} | {:<20} | {:0.4f} | {:0.4f} '.format(str(id), str(stuff_names[getMappingIndex(id, name = 'stuff')]), iou, macc)
                 print(content)
 
+            # Panoptic
+            LOGGER.info(f'\nEvaluating panoptic segmentation... ')
+
+            panoptic_masks_folder = str(anno_path / 'panoptic/masks/val2017')  # annotations json
+            os.system(
+                'python -m panopticapi.evaluation' +
+                f' --gt_json_file {panoptic_anno_json}' +
+                f' --pred_json_file {panoptic_pred_json}' +
+                f' --gt_folder {panoptic_masks_folder}' +
+                f' --pred_folder {panoptic_output_dir}'
+            )
+
         except Exception as e:
             LOGGER.info(f'pycocotools unable to run: {e}')
 
@@ -523,7 +804,7 @@ def run(
     if not training:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
-    final_metric = mp_bbox, mr_bbox, map50_bbox, map_bbox, mp_mask, mr_mask, map50_mask, map_mask, miou_sem, fwiou_sem
+    final_metric = mp_bbox, mr_bbox, map50_bbox, map_bbox, mp_mask, mr_mask, map50_mask, map_mask, miou_sem
     return (*final_metric, *(loss.cpu() / len(dataloader)).tolist()), metrics.get_maps(nc), t
 
 
@@ -551,6 +832,9 @@ def parse_opt():
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
+    parser.add_argument('--export-mask', action = 'store_true', help = 'export semantic masks')
+    parser.add_argument('--color-map', type = str, default = ROOT / 'data/color_map.pickle', help = 'color map for semantic/panoptic segmentation, necessary if export mask')
+    parser.add_argument('--pan-conf-thres', type = float, default = 0.25, help = 'confidence threshold for instances of panoptic')
     opt = parser.parse_args()
     opt.data = check_yaml(opt.data)  # check YAML
     # opt.save_json |= opt.data.endswith('coco.yaml')

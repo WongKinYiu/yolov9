@@ -3,10 +3,12 @@ import torch
 
 from ..metrics import ap_per_class
 
+from ..metrics import ap_per_class
+from ..semantic_seg.cocosemanticeval import Semantic_Metrics as sem_metrics
 
 def fitness(x):
     # Model fitness as a weighted combination of metrics
-    w = [0.0, 0.0, 0.1, 0.9, 0.0, 0.0, 0.1, 0.9, 0.1, 0.9]
+    w = [0.0, 0.0, 0.1, 0.9, 0.0, 0.0, 0.1, 0.9, 0.01]
     return (x[:, :len(w)] * w).sum(1)
 
 
@@ -174,61 +176,22 @@ class Metrics:
 
 
 class Semantic_Metrics:
-    def __init__(self, nc, device):
-        self.nc = nc  # number of classes
-        self.device = device
-        self.iou = []
-        self.c_bit_counts = torch.zeros(nc, dtype = torch.long).to(device)
-        self.c_intersection_counts = torch.zeros(nc, dtype = torch.long).to(device)
-        self.c_union_counts = torch.zeros(nc, dtype = torch.long).to(device)
+    def __init__(self, classes, ignore_indices = [0], print_detail = False):
+        self.classes = classes
+        self.ignore_indices = ignore_indices
+        self.print_detail = print_detail
+        self.metric = sem_metrics(classes = self.classes, ignore_indices = self.ignore_indices, print_detail = self.print_detail)
 
     def update(self, pred_masks, target_masks):
-        nb, nc, h, w = pred_masks.shape
-        device = pred_masks.device
-
-        for b in range(nb):
-            onehot_mask = pred_masks[b].to(device)
-            # convert predict mask to one hot
-            semantic_mask = torch.flatten(onehot_mask, start_dim = 1).permute(1, 0) # class x h x w -> (h x w) x class
-            max_idx = semantic_mask.argmax(1)
-            output_masks = (torch.zeros(semantic_mask.shape).to(self.device)).scatter(1, max_idx.unsqueeze(1), 1.0) # one hot: (h x w) x class
-            output_masks = torch.reshape(output_masks.permute(1, 0), (nc, h, w)) # (h x w) x class -> class x h x w
-            onehot_mask = output_masks.int()
-
-            for c in range(self.nc):
-                pred_mask = onehot_mask[c].to(device)
-                target_mask = target_masks[b, c].to(device)
-
-                # calculate IoU
-                intersection = (torch.logical_and(pred_mask, target_mask).sum()).item()
-                union = (torch.logical_or(pred_mask, target_mask).sum()).item()
-                iou = 0. if (0 == union) else (intersection / union)
-
-                # record class pixel counts, intersection counts, union counts
-                self.c_bit_counts[c] += target_mask.int().sum()
-                self.c_intersection_counts[c] += intersection
-                self.c_union_counts[c] += union
-
-                self.iou.append(iou)
+        self.metric.update(pred_masks, target_masks)
 
     def results(self):
         # Mean IoU
-        miou = 0. if (0 == len(self.iou)) else np.sum(self.iou) / (len(self.iou) * self.nc)
-
-        # Frequency Weighted IoU
-        c_iou = self.c_intersection_counts / (self.c_union_counts + 1)  # add smooth
-        # c_bit_counts = self.c_bit_counts.astype(int)
-        total_c_bit_counts = self.c_bit_counts.sum()
-        freq_ious = torch.zeros(1, dtype = torch.long).to(self.device) if (0 == total_c_bit_counts) else (self.c_bit_counts / total_c_bit_counts) * c_iou
-        fwiou = (freq_ious.sum()).item()
-
-        return (miou, fwiou)
+        return self.metric.results()
 
     def reset(self):
-        self.iou = []
-        self.c_bit_counts = torch.zeros(self.nc, dtype = torch.long).to(self.device)
-        self.c_intersection_counts = torch.zeros(self.nc, dtype = torch.long).to(self.device)
-        self.c_union_counts = torch.zeros(self.nc, dtype = torch.long).to(self.device)
+        del self.metric
+        self.metric = sem_metrics(classes = self.classes, ignore_indices = self.ignore_indices, print_detail = self.print_detail)
 
 
 KEYS = [
@@ -246,8 +209,7 @@ KEYS = [
     "metrics/recall(M)",
     "metrics/mAP_0.5(M)",
     "metrics/mAP_0.5:0.95(M)",  # metrics
-    "metrics/MIOUS(S)",
-    "metrics/FWIOUS(S)",        # metrics
+    "metrics/MIOU(S)",         # metrics
     "val/box_loss",
     "val/seg_loss",  # val loss
     "val/cls_loss",
@@ -268,5 +230,4 @@ BEST_KEYS = [
     "best/recall(M)",
     "best/mAP_0.5(M)",
     "best/mAP_0.5:0.95(M)",
-    "best/MIOUS(S)",
-    "best/FWIOUS(S)",]
+    "best/MIOU(S)",]

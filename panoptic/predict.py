@@ -1,10 +1,15 @@
 import argparse
+import numpy as np
 import os
+import pickle
 import platform
 import sys
 from pathlib import Path
+import PIL.Image as Image
 
 import torch
+from torchvision.utils import draw_segmentation_masks
+import torchvision.transforms as transforms
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLO root directory
@@ -52,6 +57,8 @@ def run(
     dnn=False,  # use OpenCV DNN for ONNX inference
     vid_stride=1,  # video frame-rate stride
     retina_masks=False,
+    export_mask = False,
+    color_map = ROOT / 'data/color_map.pickle',  # for semantic/panoptic segmentation
 ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -71,6 +78,16 @@ def run(
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
+
+    # Semantic Segmentation
+    if export_mask:
+        with open(color_map, 'rb') as f:
+            color_map = pickle.load(f)
+
+    model_yaml = model.model.yaml
+    print(model_yaml)
+    num_instance = model_yaml['nc']
+    # num_stuff = model_yaml['sem_nc'] if ('sem_nc' in model_yaml) else len(data['stuff_names'])
 
     # Dataloader
     bs = 1  # batch_size
@@ -98,7 +115,8 @@ def run(
         # Inference
         with dt[1]:
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
-            pred, proto = model(im, augment=augment, visualize=visualize)[:2]
+            pred, out = model(im, augment=augment, visualize=visualize)[:2]
+            _, _, proto, psemasks = out
 
         # NMS
         with dt[2]:
@@ -108,7 +126,7 @@ def run(
         # pred = utils.general.apply_classifier(pred, classifier_model, im, im0s)
 
         # Process predictions
-        for i, det in enumerate(pred):  # per image
+        for i, (det, psemask) in enumerate(zip(pred, psemasks)):  # per image
             seen += 1
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
@@ -187,6 +205,104 @@ def run(
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
 
+            if export_mask:
+                # Semantic segmentation
+                file_name = save_path.replace('.jpg', '_mask.jpg')
+
+                (oh, ow, _) = im0.shape
+
+                _, ic, ih, iw = im.shape
+                psemask = torch.nn.functional.interpolate(psemask[None, :], size = (ih, iw), mode = 'bilinear', align_corners = False)
+                psemask = psemask.squeeze()
+                ch, mask_h, mask_w = psemask.shape
+
+                semantic_masks = torch.flatten(psemask, start_dim = 1).permute(1, 0) # (h x w) x class
+                max_idx = semantic_masks.argmax(1)
+                output_img_mask = torch.zeros(semantic_masks.shape).scatter(1, max_idx.cpu().unsqueeze (1), 1.0) # one hot: (h x w) x class
+                output_img_mask = torch.reshape(output_img_mask.permute(1, 0), (ch, mask_h, mask_w)) # class x h x w
+
+                # resize
+                h_ratio = ih / oh
+                w_ratio = iw / ow
+
+                if len(det):
+                    output_img_mask = torch.cat((masks.to(device), output_img_mask.to(device)), 0)
+
+                if h_ratio == w_ratio:
+                    output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (oh, ow), mode = 'bilinear', align_corners = False)
+                else:
+                    transform = transforms.CenterCrop((oh, ow))
+
+                    if (1 != h_ratio) and (1 != w_ratio):
+                        h_new = oh if (h_ratio < w_ratio) else int(mask_h / w_ratio)
+                        w_new = ow if (h_ratio > w_ratio) else int(mask_w / h_ratio)
+                        output_img_mask = torch.nn.functional.interpolate(output_img_mask[None, :], size = (h_new, w_new), mode = 'bilinear', align_corners = False)
+
+                    output_img_mask = transform(output_img_mask)
+                output_img_mask = torch.squeeze(output_img_mask)
+
+                if len(det):
+                    masks = output_img_mask[: len(det)]
+                    output_img_mask = output_img_mask[len(det) :]
+
+                output_img = draw_segmentation_masks(
+                    # image = torch.nn.functional.interpolate((img_back[b])[None, :], size = (h_new, w_new), mode = 'bilinear', align_corners = False).to(dtype = torch.uint8).cpu(),
+                    image = torch.zeros((ic, oh, ow)).to(dtype = torch.uint8),
+                    masks = torch.squeeze(output_img_mask).to(dtype = torch.bool).cpu(),
+                    alpha = 1,
+                    colors = color_map[1 :],
+                )
+
+                if save_img:
+                    if 'image' == dataset.mode:
+                        cv2.imwrite(
+                            file_name,
+                            torch.permute(output_img, (1, 2, 0)).numpy()
+                        )
+                    # else:  # 'video' or 'stream' # TODO: video & stream
+
+                # Panoptic segmentation
+                panoptic_name = save_path.replace('.jpg', '_panoptic_mask.jpg')
+                output_img_mask = output_img_mask[num_instance :]  # only stuff
+                output_colors = color_map[num_instance + 1 :]  # remove 0 (unlabeled) and number of instances
+
+                if len(det):
+                    instance_colors = []
+                    shift_colors = {}
+
+                    instance_cls = det[:, 5]
+                    for cls in instance_cls:
+                        id = int(cls)  + 1
+                        instance_color = list(color_map[id])
+                        if id not in shift_colors:
+                            shift_num = 1
+                            shift_colors[id] = 1
+                        else:
+                            shift_num = shift_colors[id]
+                            shift_colors[id] += 1
+
+                            pos_num = shift_num % 2
+                            pos_idx = 0 if ((0 == pos_num) and (0 != (id % 3))) \
+                                else (2 if ((1 == pos_num) and (2 != (id % 3))) else 1)
+                            increase_num = ((shift_num // 2) + 1) * 3
+
+                            instance_color[pos_idx] = (instance_color[pos_idx] + increase_num) % 255
+
+                        instance_colors.append(tuple(instance_color))
+
+                    output_img_mask = torch.cat((masks.cpu(), output_img_mask.cpu()), 0)
+                    output_colors = instance_colors + output_colors
+
+                panoptic_mask = np.zeros((oh, ow, 3), dtype = np.uint8)
+                for output_mask, output_color in zip(output_img_mask, output_colors):
+                    if 0 != torch.sum(output_mask):
+                        panoptic_mask[1 == output_mask] = output_color
+
+                if save_img:
+                    if 'image' == dataset.mode:
+                        Image.fromarray(panoptic_mask).save(panoptic_name)
+                    # else:  # 'video' or 'stream' # TODO: video & stream
+
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
 
@@ -230,6 +346,8 @@ def parse_opt():
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
     parser.add_argument('--retina-masks', action='store_true', help='whether to plot masks in native resolution')
+    parser.add_argument('--export-mask', action = 'store_true', help = 'export semantic/panoptic masks')
+    parser.add_argument('--color-map', type = str, default = ROOT / 'data/color_map.pickle', help = 'color map for semantic/panoptic segmentation, necessary if export mask')
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
