@@ -1,0 +1,81 @@
+# This is a custom yaml file for the yolov9 architecture with segmentation.
+# Created by : SRDdev (Shreyas Dixit)
+#------------------------------ Params ------------------------#
+nc: 80
+depth_multiple: 1.0
+width_multiple: 1.0
+anchors: 3
+#---------------------------------Backbone------------------------------#
+backbone:
+  [ 
+    # Silence Block                       
+    [-1, 1, Silence, []],                       # L0
+
+    # Conv Block            
+    [-1, 1, Conv, [64, 3, 2]],                   # L1  P1/2
+
+    # Conv Block  
+    [-1, 1, Conv, [128, 3, 2]],                  # L2  P2/4
+
+    # CSPELAN Block 1
+    [-1, 1, RepNCSPELAN4, [256, 128, 64, 1]],     # L3 
+
+    # ADown 1
+    [-1, 1, ADown, [256]],                     # L4  P3/8
+
+    #CSPELAN Block 2
+    [-1, 1, RepNCSPELAN4, [512, 256, 128, 1]],     # L5
+
+    # ADown 2
+    [-1, 1, ADown, [512]],                     # L6  P4/16
+
+    #CSPELAN Block 3
+    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]], # L7
+
+    # ADown 3
+    [-1, 1, ADown, [512]],                     # L8  P5/32
+
+    # CSPELAN Block 4
+    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]], # L9  
+  ]
+ 
+#---------------------------------Heads------------------------------#
+head:
+  [
+    #------------------ Upsample Section ------------------#
+    # SPPELAN Block 1
+    [-1, 1, SPPELAN, [512, 256]],                # L10
+
+    # UP & CONCAT 1
+    [-1, 1, nn.Upsample, [None, 2, 'nearest']], # L11 
+    [[-1, 7], 1, Concat, [1]],                  # L12  //Concat Backbone L7
+
+    # CSPELAN Block 1
+    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],  # L13
+
+    # UP & CONCAT 2
+    [-1, 1, nn.Upsample, [None, 2, 'nearest']], # L14
+    [[-1, 5], 1, Concat, [1]],                  # L15  //Concat backbone L5
+
+    # CSPELAN Block 2 
+    [-1, 1, RepNCSPELAN4, [256, 256, 128, 1]],  # L16  //H-small
+
+    #------------------ Downsample Section ------------------#
+    # ADown & CONCAT 1
+    [-1, 1, ADown, [256]],                  # L17
+    [[-1, 13], 1, Concat, [1]],                  # L18  //Concat Upsample L13
+
+    # CSPELAN Block 1 
+    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],      # L19  //H-medium
+
+    # ADown & CONCAT 2
+    [-1, 1, ADown, [512]],                     # L20
+    [[-1, 10], 1, Concat, [1]],                  # L21 //Concat Upsample L16
+
+    # CSPELAN Block 2
+    [-1, 1, RepNCSPELAN4, [512, 512, 256, 1]],     # L22  //H-large
+
+    #------------------ Segmentation Section ------------------#
+    # Segmentation Block
+    [[16, 19, 22], 1, Segment, [nc, 32, 256]]  # Segment(P3, P4, P5)
+  ]
