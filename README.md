@@ -187,6 +187,10 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 # python -m torch.distributed.launch --nproc_per_node 4 --master_port 9527 train.py --workers 8 --device 0,1,2,3 --sync-bn --batch 128 --data data/coco.yaml --img 640 --cfg models/detect/gelan-c.yaml --weights '' --name gelan-c --hyp hyp.scratch-high.yaml --min-items 0 --epochs 500 --close-mosaic 15
 ```
 
+## Demo
+
+### Google Colab Demo
+If you're interested, you can test out the model in this Google Colab notebook [demo](https://colab.research.google.com/drive/1U3rbOmAZOwPUekcvpQS4GGVJQYR7VaQX?usp=sharing) 😊！
 
 ## Re-parameterization
 
