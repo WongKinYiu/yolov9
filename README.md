@@ -212,6 +212,10 @@ python detect.py --source './data/images/horses.jpg' --img 640 --device 0 --weig
 # python detect.py --source './data/images/horses.jpg' --img 640 --device 0 --weights './gelan-c.pt' --name gelan_c_c_640_detect
 ```
 
+## Loggers
+
+Check the [YOLOv9 loggers documentation](utils/loggers/README.md).
+
 
 ## Citation
 
