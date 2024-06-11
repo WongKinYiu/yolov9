@@ -901,7 +901,9 @@ def non_max_suppression(
 
     if isinstance(prediction, (list, tuple)):  # YOLO model in validation model, output = (inference_out, loss_out)
         prediction = prediction[0]  # select only inference output
-
+        
+    # this is bug: https://github.com/WongKinYiu/yolov9/issues/51#issuecomment-1973088136
+    prediction = prediction[1] if isinstance(prediction, list) else prediction
     device = prediction.device
     mps = 'mps' in device.type  # Apple MPS
     if mps:  # MPS not fully supported yet, convert tensors to CPU before NMS
