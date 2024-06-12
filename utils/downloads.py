@@ -54,7 +54,7 @@ def safe_download(file, url, url2=None, min_bytes=1E0, error_msg=''):
         LOGGER.info('')
 
 
-def attempt_download(file, repo='ultralytics/yolov5', release='v7.0'):
+def attempt_download(file, repo='WongKinYiu/yolov9', release='latest'):
     # Attempt file download from GitHub release assets if not found locally. release = 'latest', 'v7.0', etc.
     from utils.general import LOGGER
 
@@ -79,7 +79,7 @@ def attempt_download(file, repo='ultralytics/yolov5', release='v7.0'):
             return file
 
         # GitHub assets
-        assets = [f'yolov5{size}{suffix}.pt' for size in 'nsmlx' for suffix in ('', '6', '-cls', '-seg')]  # default
+        assets = [f'yolov9{size}{suffix}.pt' for size in ('', '-c', '-e', '-relu') for suffix in ('', '-cls', '-seg')]  # default
         try:
             tag, assets = github_assets(repo, release)
         except Exception:
@@ -93,7 +93,7 @@ def attempt_download(file, repo='ultralytics/yolov5', release='v7.0'):
 
         file.parent.mkdir(parents=True, exist_ok=True)  # make parent dir (if required)
         if name in assets:
-            url3 = 'https://drive.google.com/drive/folders/1EFQTEUeXWSFww0luse2jB9M1QNZQGwNl'  # backup gdrive mirror
+            url3 = 'https://drive.google.com/drive/folders/1EFQTEUeXWSFww0luse2jB9M1QNZQGwNl'  # backup gdrive mirror DOES NOT EXIST!
             safe_download(
                 file,
                 url=f'https://github.com/{repo}/releases/download/{tag}/{name}',

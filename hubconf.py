@@ -66,6 +66,20 @@ def _create(name, pretrained=True, channels=3, classes=80, autoshape=True, verbo
         raise Exception(s) from e
 
 
+def yolov9c(pretrained=True, channels=3, classes=80, autoshape=True, _verbose=True, device=None):
+    """Creates YOLOv9-compact model with options for pretraining, input channels, class count, autoshaping, verbosity, and
+    device.
+    """
+    return _create("yolov9-c", pretrained, channels, classes, autoshape, _verbose, device)
+
+
+def yolov9e(pretrained=True, channels=3, classes=80, autoshape=True, _verbose=True, device=None):
+    """Creates YOLOv9-extended model with options for pretraining, input channels, class count, autoshaping, verbosity, and
+    device.
+    """
+    return _create("yolov9-e", pretrained, channels, classes, autoshape, _verbose, device)
+
+
 def custom(path='path/to/model.pt', autoshape=True, _verbose=True, device=None):
     # YOLO custom or local model
     return _create(path, autoshape=autoshape, verbose=_verbose, device=device)
