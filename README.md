@@ -192,6 +192,26 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 9527 train_d
 
 See [reparameterization.ipynb](https://github.com/WongKinYiu/yolov9/blob/main/tools/reparameterization.ipynb).
 
+## Logging
+
+Log all your YOLO training runs to Comet to debug and compare Model Performance 
+
+Step 1: Install Comet
+
+``` shell
+pip install comet_ml 
+```
+
+Step 2:  Sign up for a [free Comet account](https://www.comet.com/signup?utm_source=yolov9&utm_medium=referral&utm_content=github) and set your [Comet API Key](https://www.comet.com/account-settings/apiKeys) as a global variable
+
+``` shell
+export COMET_API_KEY=<Your Comet API Key>
+```
+
+Step 3: Start debugging and comparing your model training runs in the Comet UI!
+
+![Comet UI](./figure/comet_ui.gif)
+
 
 ## Inference
 
