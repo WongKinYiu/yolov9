@@ -27,14 +27,14 @@ Implementation of YOLOv9
 | [**Mask-guided YOLOv9-C**]() | **53.3%** | 52.3% | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C**]() | **52.9%** | 52.3% | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite**]() | **52.7%** (temp) | -- | **13.3M** | **66.7G** |
+| [**YOLOv9-C TR**]() |  **%** (temp) | -- | **14.1M** | **67.5G** |
 |  |  |  |  |
 | [**Anchor-free YOLOv9-C (fine branch)**]() | **52.4%** | 52.3% | **25.3M** | **102.1G** |
 | [**Mask-guided YOLOv9-C (fine branch)**]() | **52.7%** (temp) | -- | **25.3M** | **102.1G** |
 | [**Light Head YOLOv9-C (fine branch)**]() | **52.7%** | 52.1% | **21.1M** | **82.5G** |
 | [**YOLOv9-C Lite (fine branch)**]() | **52.4%** (temp) | -- | **13.3M** | **66.7G** |
+| [**YOLOv9-C TR (fine branch)**]() |  **%** (temp) | -- | **14.1M** | **67.5G** |
 |  |  |  |  |
-<!-- | [**YOLOv9-C TR**]() |  **%** (temp) | **M** | **G** | -->
-<!-- | [**YOLOv9-C TR (fine branch)**]() |  **%** (temp) | **M** | **G** | -->
 
 * Anchor-based YOLOv9 replace YOLOv9 head by YOLOv7 head.
 * Anchor-free YOLOv9 is YOLOv9.
