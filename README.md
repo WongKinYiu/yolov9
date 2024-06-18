@@ -129,6 +129,9 @@ cd /yolov9
 [`gelan-s.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-s.pt) [`gelan-m.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-m.pt) [`gelan-c.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-c.pt) [`gelan-e.pt`](https://github.com/WongKinYiu/yolov9/releases/download/v0.1/gelan-e.pt)
 
 ``` shell
+# evaluate converted yolov9 models in MUSA (Moore Threads)
+python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device musa:1 --weights './yolov9-c-converted.pt' --save-json --name yolov9_c_c_640_val
+
 # evaluate converted yolov9 models
 python val.py --data data/coco.yaml --img 640 --batch 32 --conf 0.001 --iou 0.7 --device 0 --weights './yolov9-c-converted.pt' --save-json --name yolov9_c_c_640_val
 
