@@ -101,7 +101,7 @@ AutoDL docker environment: https://github.com/WongKinYiu/yolov9/issues/112#issue
 
 ## Installation
 
-Docker environment (recommended)
+Docker environment
 <details><summary> <b>Expand</b> </summary>
 
 ``` shell
@@ -121,6 +121,27 @@ cd /yolov9
 
 </details>
 
+Conda environment (recommended) WSL or Ubuntu encouraged.
+<details><summary> <b>Expand</b> </summary>
+
+``` shell
+# Considering you have installed Conda or Miniconda
+conda create -n yolov9 python=3.9
+conda activate yolov9
+
+cd yolov9-yi
+pip install -r requirements.txt
+
+# Check CUDA support
+python -c "import torch;print(torch.cuda.is_available())"
+> True
+
+# Ensure python can find yolo files
+export PYTHONPATH="$PWD"
+
+```
+
+</details>
 
 ## Evaluation
 
