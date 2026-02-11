@@ -280,23 +280,30 @@ class ComputeLoss_NEW:
                                  tbox[i][..., 2] > 0.0])  # valid
 
         # Lowest 3 losses per label
-        n_assign = 4  # top n matches
-        cat_loss = [torch.cat(x, 1) for x in zip(*all_loss)]
-        ij = torch.zeros_like(cat_loss[0]).bool()  # top 3 mask
-        sum_loss = cat_loss[0] + cat_loss[2]
-        for col in torch.argsort(sum_loss, dim=1).T[:n_assign]:
-            # ij[range(n_labels), col] = True
-            ij[range(n_labels), col] = cat_loss[4][range(n_labels), col]
-        loss[0] = cat_loss[0][ij].mean() * self.nl  # box loss
-        loss[2] = cat_loss[2][ij].mean() * self.nl  # cls loss
+        if all_loss:
+            n_assign = 4  # top n matches
+            cat_loss = [torch.cat(x, 1) for x in zip(*all_loss)]
+            ij = torch.zeros_like(cat_loss[0]).bool()  # top 3 mask
+            sum_loss = cat_loss[0] + cat_loss[2]
+            for col in torch.argsort(sum_loss, dim=1).T[:n_assign]:
+                # ij[range(n_labels), col] = True
+                ij[range(n_labels), col] = cat_loss[4][range(n_labels), col]
+            if ij.any():
+                loss[0] = cat_loss[0][ij].mean() * self.nl  # box loss
+                loss[2] = cat_loss[2][ij].mean() * self.nl  # cls loss
 
-        # Obj loss
-        for i, (h, pi) in enumerate(zip(ij.chunk(self.nl, 1), p)):  # layer index, layer predictions
-            b, gj, gi = indices[i]  # image, anchor, gridy, gridx
-            tobj = torch.zeros((pi.shape[0], pi.shape[2], pi.shape[3]), dtype=pi.dtype, device=self.device)  # obj
-            if n_labels:  # if any labels
-                tobj[b[h], gj[h], gi[h]] = all_loss[i][3][h]
-            loss[1] += self.BCEobj(pi[:, 4], tobj) * (self.balance[i] * self.hyp['obj'])
+            # Obj loss
+            for i, (h, pi) in enumerate(zip(ij.chunk(self.nl, 1), p)):  # layer index, layer predictions
+                b, gj, gi = indices[i]  # image, anchor, gridy, gridx
+                tobj = torch.zeros((pi.shape[0], pi.shape[2], pi.shape[3]), dtype=pi.dtype, device=self.device)  # obj
+                if n_labels:  # if any labels
+                    tobj[b[h], gj[h], gi[h]] = all_loss[i][3][h]
+                loss[1] += self.BCEobj(pi[:, 4], tobj) * (self.balance[i] * self.hyp['obj'])
+        else:
+            # No positive targets: only compute objectness loss against all-zero targets
+            for i, pi in enumerate(p):
+                tobj = torch.zeros((pi.shape[0], pi.shape[2], pi.shape[3]), dtype=pi.dtype, device=self.device)
+                loss[1] += self.BCEobj(pi[:, 4], tobj) * (self.balance[i] * self.hyp['obj'])
 
         return loss.sum() * bs, loss.detach()  # [box, obj, cls] losses
 
