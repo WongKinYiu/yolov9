@@ -6,6 +6,7 @@ gitpython
 ipython
 matplotlib>=3.2.2
 numpy>=1.18.5
+packaging
 opencv-python>=4.1.1
 Pillow>=7.1.2
 psutil
